@@ -1,0 +1,31 @@
+{
+  "vessels": [
+    "Annie",
+    "AAL Kembla",
+    "Wiebke",
+    "Ocean 7 Revolution",
+    "Ocean 7 Royal",
+    "BBC Santiago",
+    "BBC Genoa",
+    "BBC Felix",
+    "Hyundai Ulsan",
+    "Lady Luciana",
+    "Sangemani"
+  ],
+  "ports": [
+    "PEV - Port Everglades",
+    "LAP - La Paz",
+    "ENS - Ensenada",
+    "GOL - Golfito",
+    "LAV - Lavrion Greece",
+    "YOK - Yokohama",
+    "RIO - Rio de Janeiro",
+    "NAN - Nanaimo Canada",
+    "SFO - San Francisco",
+    "LAX - Los Angeles",
+    "STT - St Thomas USVI",
+    "MAR - Marmaris Turkey",
+    "FPO - Freeport Bahamas"
+  ],
+  "lastUpdated": null
+}

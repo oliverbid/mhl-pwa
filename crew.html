@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MHL Services — Crew Report</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1D9E75">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MHL Crew">
+</head>
+<body class="theme-green">
+
+<header class="app-header">
+  <div class="header-left">
+    <h1>MHL Services</h1>
+    <span class="subtitle">Subcontractor Crew Report</span>
+  </div>
+</header>
+
+<main class="main-content">
+
+  <!-- Success Banner -->
+  <div id="successBanner" class="success-banner hidden">
+    <div class="check">✓</div>
+    <h2>Report Submitted!</h2>
+    <p>Your crew report has been sent successfully.</p>
+    <br>
+    <button class="btn btn-outline" onclick="resetForm()">Submit Another Report</button>
+  </div>
+
+  <form id="crewForm" novalidate>
+
+    <!-- ── Section A: Your Details ────────────────────────── -->
+    <div class="section-card">
+      <div class="section-title">A — Your Details</div>
+      <div class="section-body">
+
+        <div class="field-group keep-2">
+          <div class="field">
+            <label for="crewName">Your Name</label>
+            <select id="crewName" name="crewName" required>
+              <option value="">Select…</option>
+              <option>Marco Camberos</option>
+              <option>Paco</option>
+              <option>Chiu</option>
+              <option>Fily</option>
+              <option>Jesus</option>
+              <option>Grant</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="invoiceNumber">Invoice Number</label>
+            <span class="sublabel">Provided by Oliver</span>
+            <input type="number" id="invoiceNumber" name="invoiceNumber" placeholder="e.g. 1042" required min="1">
+          </div>
+        </div>
+
+        <!-- Name "Other" -->
+        <div class="field-group single" id="crewNameOtherWrap" style="display:none; margin-top:-4px; margin-bottom:14px;">
+          <div class="field">
+            <label for="crewNameOther">Your Name</label>
+            <input type="text" id="crewNameOther" name="crewNameOther" placeholder="Enter your name">
+          </div>
+        </div>
+
+        <div class="field-group keep-2">
+          <div class="field">
+            <label for="vessel">Vessel</label>
+            <select id="vessel" name="vessel" required>
+              <option value="">Loading…</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="port">Port</label>
+            <select id="port" name="port" required>
+              <option value="">Loading…</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Vessel Other -->
+        <div class="field-group single" id="vesselOtherWrap" style="display:none; margin-top:-4px; margin-bottom:14px;">
+          <div class="field">
+            <label for="vesselOther">Vessel Name</label>
+            <input type="text" id="vesselOther" name="vesselOther" placeholder="Enter vessel name">
+          </div>
+        </div>
+
+        <!-- Port Other -->
+        <div class="field-group single" id="portOtherWrap" style="display:none; margin-top:-4px; margin-bottom:14px;">
+          <div class="field">
+            <label for="portOther">Port Name</label>
+            <input type="text" id="portOther" name="portOther" placeholder="Enter port name">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Section B: Hours Worked ────────────────────────── -->
+    <div class="section-card">
+      <div class="section-title">B — Hours Worked</div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table id="hoursTable">
+            <thead>
+              <tr>
+                <th class="col-date">Date</th>
+                <th class="col-time">Start</th>
+                <th class="col-time">Finish</th>
+                <th class="col-role">Role</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="hoursBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-add" onclick="addHoursRow()">+ Add day</button>
+      </div>
+    </div>
+
+    <!-- ── Section C: Stand-by Days ──────────────────────── -->
+    <div class="section-card">
+      <div class="section-title">C — Stand-by Days</div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table id="standbyTable">
+            <thead>
+              <tr>
+                <th class="col-date">Date</th>
+                <th class="col-num" style="min-width:120px">Number of People</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="standbyBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-add" onclick="addStandbyRow()">+ Add stand-by day</button>
+      </div>
+    </div>
+
+    <!-- ── Section D: Travel Days ─────────────────────────── -->
+    <div class="section-card">
+      <div class="section-title">D — Travel Days</div>
+      <div class="section-body">
+        <div class="table-wrap">
+          <table id="travelTable">
+            <thead>
+              <tr>
+                <th class="col-date">Date</th>
+                <th class="col-num" style="min-width:120px">Number of People</th>
+                <th class="col-del"></th>
+              </tr>
+            </thead>
+            <tbody id="travelBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-add" onclick="addTravelRow()">+ Add travel day</button>
+      </div>
+    </div>
+
+    <!-- ── Section E: Cash Expenses ──────────────────────── -->
+    <div class="section-card">
+      <div class="section-title">E — Cash Expenses</div>
+      <div class="section-body">
+        <div class="field-group single">
+          <div class="field">
+            <textarea id="cashExpenses" name="cashExpenses"
+              placeholder="Port paperwork $200 / Stevedore $500 / Customs $150"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Submit ──────────────────────────────────────────── -->
+    <button type="submit" class="btn btn-primary btn-submit">Submit Report</button>
+
+  </form>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+const WEBHOOK_URL = 'POWER_AUTOMATE_WEBHOOK_URL';
+
+// ── Load config ────────────────────────────────────────────
+async function loadConfig() {
+  try {
+    const res = await fetch('config.json?t=' + Date.now());
+    return await res.json();
+  } catch (e) {
+    return { vessels: [], ports: [] };
+  }
+}
+
+function populateSelect(selectEl, items, placeholder) {
+  selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+  items.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item;
+    opt.textContent = item;
+    selectEl.appendChild(opt);
+  });
+  const other = document.createElement('option');
+  other.value = 'Other';
+  other.textContent = 'Other';
+  selectEl.appendChild(other);
+}
+
+function setupOtherToggle(selectId, wrapId) {
+  const sel = document.getElementById(selectId);
+  const wrap = document.getElementById(wrapId);
+  sel.addEventListener('change', () => {
+    wrap.style.display = sel.value === 'Other' ? '' : 'none';
+  });
+}
+
+// ── Hours table ────────────────────────────────────────────
+function addHoursRow() {
+  const tbody = document.getElementById('hoursBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="col-date"><input type="date" name="h_date[]"></td>
+    <td class="col-time"><input type="time" name="h_start[]"></td>
+    <td class="col-time"><input type="time" name="h_finish[]"></td>
+    <td class="col-role">
+      <select name="h_role[]">
+        <option value="">Role…</option>
+        <option>Load Master</option>
+        <option>Deckhand</option>
+        <option>Crane Operator</option>
+        <option>Diver</option>
+      </select>
+    </td>
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function numOpts(min, max, def = 1) {
+  let html = '';
+  for (let i = min; i <= max; i++) {
+    html += `<option value="${i}"${i === def ? ' selected' : ''}>${i}</option>`;
+  }
+  return html;
+}
+
+function addStandbyRow() {
+  const tbody = document.getElementById('standbyBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="col-date"><input type="date" name="sb_date[]"></td>
+    <td><select name="sb_people[]">${numOpts(1,6)}</select></td>
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function addTravelRow() {
+  const tbody = document.getElementById('travelBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="col-date"><input type="date" name="tr_date[]"></td>
+    <td><select name="tr_people[]">${numOpts(1,6)}</select></td>
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function collectHours() {
+  return [...document.querySelectorAll('#hoursBody tr')].map(tr => ({
+    date:   tr.querySelector('[name="h_date[]"]').value,
+    start:  tr.querySelector('[name="h_start[]"]').value,
+    finish: tr.querySelector('[name="h_finish[]"]').value,
+    role:   tr.querySelector('[name="h_role[]"]').value,
+  }));
+}
+
+function collectTable(bodyId, dateField, peopleField) {
+  return [...document.querySelectorAll(`#${bodyId} tr`)].map(tr => ({
+    date:   tr.querySelector(`[name="${dateField}"]`).value,
+    people: tr.querySelector(`[name="${peopleField}"]`).value,
+  }));
+}
+
+// ── Validation ─────────────────────────────────────────────
+function validate() {
+  let ok = true;
+  ['crewName','invoiceNumber','vessel','port'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('field-error');
+    if (!el.value) { el.classList.add('field-error'); ok = false; }
+  });
+  if (document.getElementById('crewName').value === 'Other') {
+    const ot = document.getElementById('crewNameOther');
+    ot.classList.remove('field-error');
+    if (!ot.value.trim()) { ot.classList.add('field-error'); ok = false; }
+  }
+  if (document.getElementById('vessel').value === 'Other') {
+    const ot = document.getElementById('vesselOther');
+    ot.classList.remove('field-error');
+    if (!ot.value.trim()) { ot.classList.add('field-error'); ok = false; }
+  }
+  if (document.getElementById('port').value === 'Other') {
+    const ot = document.getElementById('portOther');
+    ot.classList.remove('field-error');
+    if (!ot.value.trim()) { ot.classList.add('field-error'); ok = false; }
+  }
+  return ok;
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Submit ─────────────────────────────────────────────────
+document.getElementById('crewForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validate()) { showToast('Please fill in all required fields'); return; }
+
+  const name   = document.getElementById('crewName').value;
+  const vessel = document.getElementById('vessel').value;
+  const port   = document.getElementById('port').value;
+
+  const payload = {
+    submittedBy: 'crew',
+    submittedAt: new Date().toISOString(),
+    crewName:      name === 'Other' ? document.getElementById('crewNameOther').value : name,
+    invoiceNumber: document.getElementById('invoiceNumber').value,
+    vessel: vessel === 'Other' ? document.getElementById('vesselOther').value : vessel,
+    port:   port   === 'Other' ? document.getElementById('portOther').value   : port,
+    workHours:   collectHours(),
+    standbyDays: collectTable('standbyBody', 'sb_date[]', 'sb_people[]'),
+    travelDays:  collectTable('travelBody',  'tr_date[]', 'tr_people[]'),
+    cashExpenses: document.getElementById('cashExpenses').value,
+  };
+
+  const btn = e.target.querySelector('[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  try {
+    if (WEBHOOK_URL !== 'POWER_AUTOMATE_WEBHOOK_URL') {
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      console.log('PAYLOAD (dev mode):', JSON.stringify(payload, null, 2));
+      await new Promise(r => setTimeout(r, 600));
+    }
+    document.getElementById('crewForm').classList.add('hidden');
+    document.getElementById('successBanner').classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    showToast('Submission failed — please check your connection');
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Submit Report';
+  }
+});
+
+function resetForm() {
+  document.getElementById('crewForm').reset();
+  document.getElementById('crewForm').classList.remove('hidden');
+  document.getElementById('successBanner').classList.add('hidden');
+  document.getElementById('hoursBody').innerHTML = '';
+  document.getElementById('standbyBody').innerHTML = '';
+  document.getElementById('travelBody').innerHTML = '';
+  addHoursRow();
+}
+
+// ── Init ───────────────────────────────────────────────────
+(async () => {
+  const cfg = await loadConfig();
+  populateSelect(document.getElementById('vessel'), cfg.vessels, 'Select vessel…');
+  populateSelect(document.getElementById('port'),   cfg.ports,   'Select port…');
+  setupOtherToggle('crewName', 'crewNameOtherWrap');
+  setupOtherToggle('vessel',   'vesselOtherWrap');
+  setupOtherToggle('port',     'portOtherWrap');
+  addHoursRow();
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(console.error);
+  }
+})();
+</script>
+</body>
+</html>

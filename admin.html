@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MHL Services — Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#185FA5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <h1>MHL Services</h1>
+    <span class="subtitle">Admin</span>
+  </div>
+  <a href="report.html" class="settings-btn" title="Back to report">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+  </a>
+</header>
+
+<main class="main-content">
+
+  <!-- ── PIN Screen ─────────────────────────────────────── -->
+  <div id="pinScreen" class="pin-screen">
+    <div class="pin-card">
+      <div class="logo">⚓</div>
+      <h2>Admin Access</h2>
+      <p>Enter your 4-digit PIN to continue</p>
+
+      <div class="pin-input-wrap">
+        <input type="password" id="pinInput" inputmode="numeric" pattern="[0-9]*"
+               maxlength="4" placeholder="••••" autocomplete="off">
+      </div>
+      <div id="pinError" class="pin-error"></div>
+      <button class="btn btn-primary btn-block" onclick="checkPin()">Unlock</button>
+      <div id="lockoutMsg" class="lockout-msg hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── Admin Content ──────────────────────────────────── -->
+  <div id="adminContent" class="admin-content">
+
+    <div class="meta-row">
+      <span id="lastUpdated" class="last-updated">Last updated: never</span>
+      <button class="btn btn-outline" onclick="logout()" style="min-height:38px; padding:6px 16px; font-size:0.85rem;">Logout</button>
+    </div>
+
+    <!-- Vessels -->
+    <div class="section-card">
+      <div class="section-title">Vessels</div>
+      <div class="section-body">
+        <div id="vesselList"></div>
+        <div class="add-item-row">
+          <input type="text" id="newVessel" placeholder="Add vessel name…" maxlength="80">
+          <button class="btn btn-primary" onclick="addVessel()" style="white-space:nowrap;">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ports -->
+    <div class="section-card">
+      <div class="section-title">Ports</div>
+      <div class="section-body">
+        <div id="portList"></div>
+        <div class="add-item-row">
+          <input type="text" id="newPort" placeholder="Add port (e.g. ABC - City Name)…" maxlength="80">
+          <button class="btn btn-primary" onclick="addPort()" style="white-space:nowrap;">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <button class="btn btn-primary btn-submit" onclick="saveConfig()">
+      Save Changes to GitHub
+    </button>
+
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ── GitHub config (fill in before deploying) ───────────────
+const GITHUB_USERNAME = 'GITHUB_USERNAME';
+const GITHUB_REPO     = 'GITHUB_REPO';
+const GITHUB_BRANCH   = 'main';
+const CONFIG_PATH     = 'config.json';
+
+// ── PIN config ─────────────────────────────────────────────
+const CORRECT_PIN     = '1973';
+const MAX_ATTEMPTS    = 3;
+const LOCKOUT_MS      = 10 * 60 * 1000; // 10 minutes
+
+// ── State ──────────────────────────────────────────────────
+let config    = { vessels: [], ports: [], lastUpdated: null };
+let githubSHA = null; // current file SHA for GitHub API update
+
+// ── PIN logic ──────────────────────────────────────────────
+function getAttemptState() {
+  const raw = localStorage.getItem('mhl_pin_state');
+  if (!raw) return { attempts: 0, lockedUntil: 0 };
+  return JSON.parse(raw);
+}
+
+function saveAttemptState(state) {
+  localStorage.setItem('mhl_pin_state', JSON.stringify(state));
+}
+
+function checkLockout() {
+  const state = getAttemptState();
+  if (state.lockedUntil && Date.now() < state.lockedUntil) {
+    const remaining = Math.ceil((state.lockedUntil - Date.now()) / 60000);
+    showLockout(`Locked — try again in ${remaining} minute${remaining !== 1 ? 's' : ''}`);
+    return true;
+  }
+  return false;
+}
+
+function showLockout(msg) {
+  document.getElementById('lockoutMsg').textContent = msg;
+  document.getElementById('lockoutMsg').classList.remove('hidden');
+  document.getElementById('pinInput').disabled = true;
+  document.querySelector('#pinScreen .btn-primary').disabled = true;
+}
+
+function checkPin() {
+  if (checkLockout()) return;
+
+  const input = document.getElementById('pinInput').value.trim();
+  const state = getAttemptState();
+
+  if (input === CORRECT_PIN) {
+    saveAttemptState({ attempts: 0, lockedUntil: 0 });
+    document.getElementById('pinScreen').style.display = 'none';
+    document.getElementById('adminContent').classList.add('visible');
+    loadConfig();
+  } else {
+    state.attempts = (state.attempts || 0) + 1;
+    const remaining = MAX_ATTEMPTS - state.attempts;
+
+    if (state.attempts >= MAX_ATTEMPTS) {
+      state.lockedUntil = Date.now() + LOCKOUT_MS;
+      saveAttemptState(state);
+      showLockout('Too many attempts — locked for 10 minutes');
+      document.getElementById('pinError').textContent = '';
+    } else {
+      saveAttemptState(state);
+      document.getElementById('pinError').textContent =
+        `Incorrect PIN. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.`;
+    }
+
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinInput').classList.add('field-error');
+    setTimeout(() => document.getElementById('pinInput').classList.remove('field-error'), 800);
+  }
+}
+
+// Allow Enter key on PIN input
+document.getElementById('pinInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPin();
+});
+
+// Check lockout on page load
+window.addEventListener('DOMContentLoaded', () => {
+  checkLockout();
+});
+
+function logout() {
+  document.getElementById('adminContent').classList.remove('visible');
+  document.getElementById('pinScreen').style.display = '';
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinError').textContent = '';
+}
+
+// ── Load config ────────────────────────────────────────────
+async function loadConfig() {
+  try {
+    // Fetch with SHA via GitHub API
+    const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${CONFIG_PATH}`;
+    if (GITHUB_USERNAME !== 'GITHUB_USERNAME') {
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      githubSHA = data.sha;
+      const decoded = JSON.parse(atob(data.content.replace(/\n/g, '')));
+      config = decoded;
+    } else {
+      // Dev mode: load local file
+      const res = await fetch('config.json?t=' + Date.now());
+      config = await res.json();
+    }
+  } catch (e) {
+    showToast('Could not load config — using cached version');
+    try {
+      const res = await fetch('config.json?t=' + Date.now());
+      config = await res.json();
+    } catch {}
+  }
+  renderLists();
+  renderLastUpdated();
+}
+
+// ── Render ─────────────────────────────────────────────────
+function renderLists() {
+  renderList('vesselList', config.vessels, 'vessel');
+  renderList('portList',   config.ports,   'port');
+}
+
+function renderList(containerId, items, type) {
+  const container = document.getElementById(containerId);
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:8px 0;">No items yet.</p>';
+    return;
+  }
+  container.innerHTML = items.map((item, i) => `
+    <div class="list-item">
+      <span class="item-name">${escHtml(item)}</span>
+      <button class="btn btn-danger" onclick="removeItem('${type}', ${i})" style="min-height:34px;min-width:34px;">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderLastUpdated() {
+  const el = document.getElementById('lastUpdated');
+  if (config.lastUpdated) {
+    const d = new Date(config.lastUpdated);
+    el.textContent = `Last updated: ${d.toLocaleString()}`;
+  } else {
+    el.textContent = 'Last updated: never';
+  }
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Edit items ─────────────────────────────────────────────
+function removeItem(type, index) {
+  if (type === 'vessel') config.vessels.splice(index, 1);
+  else                   config.ports.splice(index, 1);
+  renderLists();
+}
+
+function addVessel() {
+  const input = document.getElementById('newVessel');
+  const val = input.value.trim();
+  if (!val) { showToast('Enter a vessel name first'); return; }
+  if (config.vessels.includes(val)) { showToast('Already in list'); return; }
+  config.vessels.push(val);
+  input.value = '';
+  renderLists();
+}
+
+function addPort() {
+  const input = document.getElementById('newPort');
+  const val = input.value.trim();
+  if (!val) { showToast('Enter a port name first'); return; }
+  if (config.ports.includes(val)) { showToast('Already in list'); return; }
+  config.ports.push(val);
+  input.value = '';
+  renderLists();
+}
+
+// Allow Enter on add inputs
+document.getElementById('newVessel').addEventListener('keydown', e => { if (e.key === 'Enter') addVessel(); });
+document.getElementById('newPort').addEventListener('keydown',   e => { if (e.key === 'Enter') addPort(); });
+
+// ── Save to GitHub ─────────────────────────────────────────
+async function saveConfig() {
+  config.lastUpdated = new Date().toISOString();
+
+  if (GITHUB_USERNAME === 'GITHUB_USERNAME') {
+    // Dev mode
+    console.log('Config to save (dev mode):', JSON.stringify(config, null, 2));
+    showToast('Dev mode: config logged to console (GitHub not configured)');
+    renderLastUpdated();
+    return;
+  }
+
+  const token = prompt('Enter your GitHub Personal Access Token (repo scope):');
+  if (!token) { showToast('Cancelled'); return; }
+
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(config, null, 2) + '\n')));
+  const apiUrl  = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${CONFIG_PATH}`;
+
+  const body = {
+    message: 'Update config.json via admin panel',
+    content,
+    branch: GITHUB_BRANCH,
+  };
+  if (githubSHA) body.sha = githubSHA;
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'GitHub API error');
+    }
+
+    const data = await res.json();
+    githubSHA = data.content.sha;
+    showToast('Config saved to GitHub successfully');
+    renderLastUpdated();
+  } catch (err) {
+    showToast('Save failed: ' + err.message);
+    console.error(err);
+  }
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
