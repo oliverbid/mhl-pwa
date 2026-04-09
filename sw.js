@@ -1,13 +1,14 @@
 const CACHE_NAME = 'mhl-pwa-v1';
+const BASE = '/mhl-pwa';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/report.html',
-  '/crew.html',
-  '/admin.html',
-  '/style.css',
-  '/config.json',
-  '/manifest.json'
+  BASE + '/',
+  BASE + '/index.html',
+  BASE + '/report.html',
+  BASE + '/crew.html',
+  BASE + '/admin.html',
+  BASE + '/style.css',
+  BASE + '/config.json',
+  BASE + '/manifest.json'
 ];
 
 self.addEventListener('install', event => {
