@@ -1,0 +1,26 @@
+{
+  "name": "MHL Crew Report",
+  "short_name": "MHL Crew",
+  "description": "MHL Services subcontractor crew report",
+  "id": "/mhl-pwa/crew.html",
+  "scope": "/mhl-pwa/",
+  "start_url": "/mhl-pwa/crew.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1D9E75",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/mhl-pwa/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/mhl-pwa/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
