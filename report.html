@@ -10,6 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MHL">
+  <!-- MSAL for Microsoft Graph authentication -->
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 </head>
 <body>
 
@@ -38,6 +40,14 @@
   </div>
 
   <form id="reportForm" novalidate>
+
+    <!-- ── Auth Status Banner ────────────────────────────── -->
+    <div class="auth-banner" id="authBanner">
+      <span id="authInfo">Sign in with Microsoft to submit reports</span>
+      <button type="button" id="signInBtn" class="btn btn-outline"
+              style="min-height:38px;padding:6px 18px;font-size:0.85rem;"
+              onclick="signIn()">Sign in with Microsoft</button>
+    </div>
 
     <!-- ── Section A: Job Details ─────────────────────────── -->
     <div class="section-card">
@@ -258,7 +268,177 @@
 <div id="toast" class="toast"></div>
 
 <script>
-const WEBHOOK_URL = 'POWER_AUTOMATE_WEBHOOK_URL';
+// ── Azure / Graph config ───────────────────────────────────
+const AZURE_CLIENT_ID  = '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a';
+const AZURE_TENANT_ID  = 'c45b6a98-5466-42bf-9671-d8e2073d7606';
+const REDIRECT_URI     = 'https://oliverbid.github.io/mhl-pwa/report.html';
+const GRAPH_SCOPES     = ['https://graph.microsoft.com/Files.ReadWrite'];
+const EXCEL_ENDPOINT   =
+  'https://graph.microsoft.com/v1.0/me/drive/root:' +
+  '/MHL%20Forms%20Data/MHL%20Job%20Reports.xlsx:' +
+  '/workbook/tables/JobReports/rows';
+
+// ── MSAL instance ──────────────────────────────────────────
+const msalInstance = new msal.PublicClientApplication({
+  auth: {
+    clientId:    AZURE_CLIENT_ID,
+    authority:   `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
+    redirectUri: REDIRECT_URI,
+  },
+  cache: {
+    cacheLocation:          'localStorage',
+    storeAuthStateInCookie: true, // required for iOS Safari
+  },
+});
+
+let currentAccount = null;
+
+// ── Auth UI ────────────────────────────────────────────────
+function updateAuthUI() {
+  const btn  = document.getElementById('signInBtn');
+  const info = document.getElementById('authInfo');
+  if (currentAccount) {
+    const name = currentAccount.name || currentAccount.username;
+    info.textContent  = `Signed in as ${name}`;
+    info.style.color  = 'var(--blue-dark)';
+    btn.textContent   = 'Sign out';
+    btn.onclick       = signOut;
+  } else {
+    info.textContent  = 'Sign in with Microsoft to submit reports';
+    info.style.color  = 'var(--muted)';
+    btn.textContent   = 'Sign in with Microsoft';
+    btn.onclick       = signIn;
+  }
+}
+
+async function signIn() {
+  saveFormState();
+  await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES });
+}
+
+function signOut() {
+  msalInstance.logoutRedirect({ account: currentAccount });
+}
+
+async function getAccessToken() {
+  if (!currentAccount) throw new Error('Not signed in');
+  try {
+    const result = await msalInstance.acquireTokenSilent({
+      scopes:  GRAPH_SCOPES,
+      account: currentAccount,
+    });
+    return result.accessToken;
+  } catch (err) {
+    if (err instanceof msal.InteractionRequiredAuthError) {
+      saveFormState();
+      await msalInstance.acquireTokenRedirect({ scopes: GRAPH_SCOPES, account: currentAccount });
+    }
+    throw err;
+  }
+}
+
+// ── Form state — saved to sessionStorage before auth redirect
+function saveFormState() {
+  try {
+    sessionStorage.setItem('mhl_report_state', JSON.stringify({
+      loadMaster:      document.getElementById('loadMaster').value,
+      loadMasterOther: document.getElementById('loadMasterOther').value,
+      invoiceNumber:   document.getElementById('invoiceNumber').value,
+      vessel:          document.getElementById('vessel').value,
+      vesselOther:     document.getElementById('vesselOther').value,
+      port:            document.getElementById('port').value,
+      portOther:       document.getElementById('portOther').value,
+      client:          document.getElementById('client').value,
+      operationType:   document.getElementById('operationType').value,
+      jobStart:        document.getElementById('jobStart').value,
+      jobEnd:          document.getElementById('jobEnd').value,
+      perDiemPeople:   document.getElementById('perDiemPeople').value,
+      perDiemDays:     document.getElementById('perDiemDays').value,
+      logisticsHours:  document.getElementById('logisticsHours').value,
+      cashExpenses:    document.getElementById('cashExpenses').value,
+      hoursRows:   collectHours(),
+      standbyRows: collectTable('standbyBody', 'sb_date[]', 'sb_people[]'),
+      travelRows:  collectTable('travelBody',  'tr_date[]', 'tr_people[]'),
+    }));
+  } catch (e) { /* sessionStorage unavailable — silent fail */ }
+}
+
+function restoreFormState() {
+  const raw = sessionStorage.getItem('mhl_report_state');
+  if (!raw) return;
+  sessionStorage.removeItem('mhl_report_state');
+  window._pendingState = JSON.parse(raw);
+  // Simple scalar fields can be set immediately
+  const s = window._pendingState;
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('loadMaster',      s.loadMaster);
+  set('loadMasterOther', s.loadMasterOther);
+  set('invoiceNumber',   s.invoiceNumber);
+  if (s.loadMaster === 'Other') document.getElementById('loadMasterOtherWrap').style.display = '';
+}
+
+// Called after config dropdowns are populated
+function applyDeferredState() {
+  const s = window._pendingState;
+  if (!s) return;
+  window._pendingState = null;
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('vessel',        s.vessel);
+  set('vesselOther',   s.vesselOther);
+  set('port',          s.port);
+  set('portOther',     s.portOther);
+  set('client',        s.client);
+  set('operationType', s.operationType);
+  set('jobStart',      s.jobStart);
+  set('jobEnd',        s.jobEnd);
+  set('perDiemPeople', s.perDiemPeople);
+  set('perDiemDays',   s.perDiemDays);
+  set('logisticsHours',s.logisticsHours);
+  set('cashExpenses',  s.cashExpenses);
+  if (s.vessel === 'Other') document.getElementById('vesselOtherWrap').style.display = '';
+  if (s.port   === 'Other') document.getElementById('portOtherWrap').style.display   = '';
+  // Restore table rows
+  document.getElementById('hoursBody').innerHTML   = '';
+  document.getElementById('standbyBody').innerHTML = '';
+  document.getElementById('travelBody').innerHTML  = '';
+  (s.hoursRows || []).forEach(r => {
+    addHoursRow();
+    const tr = document.querySelector('#hoursBody tr:last-child');
+    tr.querySelector('[name="h_date[]"]').value   = r.date;
+    tr.querySelector('[name="h_start[]"]').value  = r.start;
+    tr.querySelector('[name="h_finish[]"]').value = r.finish;
+    tr.querySelector('[name="h_lm[]"]').value     = r.lm;
+    tr.querySelector('[name="h_dh[]"]').value     = r.dh;
+    tr.querySelector('[name="h_crane[]"]').value  = r.crane;
+    tr.querySelector('[name="h_diver[]"]').value  = r.diver;
+  });
+  (s.standbyRows || []).forEach(r => {
+    addStandbyRow();
+    const tr = document.querySelector('#standbyBody tr:last-child');
+    tr.querySelector('[name="sb_date[]"]').value   = r.date;
+    tr.querySelector('[name="sb_people[]"]').value = r.people;
+  });
+  (s.travelRows || []).forEach(r => {
+    addTravelRow();
+    const tr = document.querySelector('#travelBody tr:last-child');
+    tr.querySelector('[name="tr_date[]"]').value   = r.date;
+    tr.querySelector('[name="tr_people[]"]').value = r.people;
+  });
+}
+
+// ── Build Excel row (17 columns — matches JobReports table) ─
+function buildExcelRow(p) {
+  const fmtHours = rows => rows.map(r =>
+    `${r.date} ${r.start}–${r.finish} | LM:${r.lm} DH:${r.dh} Crane:${r.crane} Diver:${r.diver}`
+  ).join('\n') || '';
+  const fmtDays = rows => rows.map(r => `${r.date}: ${r.people} people`).join('\n') || '';
+  return [[
+    p.submittedBy, p.submittedAt, p.loadMaster, p.invoiceNumber,
+    p.vessel, p.port, p.client, p.operationType, p.jobStart, p.jobEnd,
+    fmtHours(p.workHours), fmtDays(p.standbyDays), fmtDays(p.travelDays),
+    p.perDiemPeople, p.perDiemDays, p.logisticsHours, p.cashExpenses,
+  ]];
+}
 
 // ── Load config ────────────────────────────────────────────
 async function loadConfig() {
@@ -274,31 +454,27 @@ function populateSelect(selectEl, items, placeholder) {
   selectEl.innerHTML = `<option value="">${placeholder}</option>`;
   items.forEach(item => {
     const opt = document.createElement('option');
-    opt.value = item;
-    opt.textContent = item;
+    opt.value = item; opt.textContent = item;
     selectEl.appendChild(opt);
   });
   const other = document.createElement('option');
-  other.value = 'Other';
-  other.textContent = 'Other';
+  other.value = 'Other'; other.textContent = 'Other';
   selectEl.appendChild(other);
 }
 
-// ── "Other" toggle helpers ─────────────────────────────────
 function setupOtherToggle(selectId, wrapId) {
-  const sel = document.getElementById(selectId);
+  const sel  = document.getElementById(selectId);
   const wrap = document.getElementById(wrapId);
   sel.addEventListener('change', () => {
     wrap.style.display = sel.value === 'Other' ? '' : 'none';
   });
 }
 
-// ── Hours table ────────────────────────────────────────────
+// ── Table builders ─────────────────────────────────────────
 function numOpts(min, max, def = 0) {
   let html = '';
-  for (let i = min; i <= max; i++) {
+  for (let i = min; i <= max; i++)
     html += `<option value="${i}"${i === def ? ' selected' : ''}>${i}</option>`;
-  }
   return html;
 }
 
@@ -313,45 +489,39 @@ function addHoursRow() {
     <td class="col-num"><select name="h_dh[]">${numOpts(0,6)}</select></td>
     <td class="col-num"><select name="h_crane[]">${numOpts(0,4)}</select></td>
     <td class="col-num"><select name="h_diver[]">${numOpts(0,4)}</select></td>
-    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
-  `;
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
-// ── Stand-by table ─────────────────────────────────────────
 function addStandbyRow() {
   const tbody = document.getElementById('standbyBody');
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td class="col-date"><input type="date" name="sb_date[]"></td>
     <td><select name="sb_people[]">${numOpts(1,6,1)}</select></td>
-    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
-  `;
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
-// ── Travel table ───────────────────────────────────────────
 function addTravelRow() {
   const tbody = document.getElementById('travelBody');
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td class="col-date"><input type="date" name="tr_date[]"></td>
     <td><select name="tr_people[]">${numOpts(1,6,1)}</select></td>
-    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
-  `;
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
-// ── Collect table data ─────────────────────────────────────
 function collectHours() {
   return [...document.querySelectorAll('#hoursBody tr')].map(tr => ({
-    date:   tr.querySelector('[name="h_date[]"]').value,
-    start:  tr.querySelector('[name="h_start[]"]').value,
-    finish: tr.querySelector('[name="h_finish[]"]').value,
-    lm:     tr.querySelector('[name="h_lm[]"]').value,
-    dh:     tr.querySelector('[name="h_dh[]"]').value,
-    crane:  tr.querySelector('[name="h_crane[]"]').value,
-    diver:  tr.querySelector('[name="h_diver[]"]').value,
+    date:  tr.querySelector('[name="h_date[]"]').value,
+    start: tr.querySelector('[name="h_start[]"]').value,
+    finish:tr.querySelector('[name="h_finish[]"]').value,
+    lm:    tr.querySelector('[name="h_lm[]"]').value,
+    dh:    tr.querySelector('[name="h_dh[]"]').value,
+    crane: tr.querySelector('[name="h_crane[]"]').value,
+    diver: tr.querySelector('[name="h_diver[]"]').value,
   }));
 }
 
@@ -365,13 +535,12 @@ function collectTable(bodyId, dateField, peopleField) {
 // ── Validation ─────────────────────────────────────────────
 function validate() {
   let ok = true;
-  const required = ['loadMaster','invoiceNumber','vessel','port','client','operationType','jobStart','jobEnd'];
-  required.forEach(id => {
-    const el = document.getElementById(id);
-    el.classList.remove('field-error');
-    if (!el.value) { el.classList.add('field-error'); ok = false; }
-  });
-
+  ['loadMaster','invoiceNumber','vessel','port','client','operationType','jobStart','jobEnd']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('field-error');
+      if (!el.value) { el.classList.add('field-error'); ok = false; }
+    });
   if (document.getElementById('loadMaster').value === 'Other') {
     const ot = document.getElementById('loadMasterOther');
     ot.classList.remove('field-error');
@@ -387,7 +556,6 @@ function validate() {
     ot.classList.remove('field-error');
     if (!ot.value.trim()) { ot.classList.add('field-error'); ok = false; }
   }
-
   return ok;
 }
 
@@ -396,59 +564,64 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 4000);
 }
 
 // ── Submit ─────────────────────────────────────────────────
 document.getElementById('reportForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (!validate()) { showToast('Please fill in all required fields'); return; }
+  if (!currentAccount) { showToast('Please sign in with Microsoft first'); return; }
 
-  const lm = document.getElementById('loadMaster').value;
+  const lm     = document.getElementById('loadMaster').value;
   const vessel = document.getElementById('vessel').value;
-  const port = document.getElementById('port').value;
+  const port   = document.getElementById('port').value;
 
   const payload = {
-    submittedBy: 'owner',
-    submittedAt: new Date().toISOString(),
-    loadMaster: lm === 'Other' ? document.getElementById('loadMasterOther').value : lm,
-    invoiceNumber: document.getElementById('invoiceNumber').value,
-    vessel: vessel === 'Other' ? document.getElementById('vesselOther').value : vessel,
-    port: port === 'Other' ? document.getElementById('portOther').value : port,
-    client: document.getElementById('client').value,
-    operationType: document.getElementById('operationType').value,
-    jobStart: document.getElementById('jobStart').value,
-    jobEnd: document.getElementById('jobEnd').value,
-    workHours: collectHours(),
-    standbyDays: collectTable('standbyBody', 'sb_date[]', 'sb_people[]'),
-    travelDays:  collectTable('travelBody',  'tr_date[]', 'tr_people[]'),
-    perDiemPeople: document.getElementById('perDiemPeople').value,
-    perDiemDays:   document.getElementById('perDiemDays').value,
+    submittedBy:    'owner',
+    submittedAt:    new Date().toISOString(),
+    loadMaster:     lm     === 'Other' ? document.getElementById('loadMasterOther').value : lm,
+    invoiceNumber:  document.getElementById('invoiceNumber').value,
+    vessel:         vessel === 'Other' ? document.getElementById('vesselOther').value     : vessel,
+    port:           port   === 'Other' ? document.getElementById('portOther').value       : port,
+    client:         document.getElementById('client').value,
+    operationType:  document.getElementById('operationType').value,
+    jobStart:       document.getElementById('jobStart').value,
+    jobEnd:         document.getElementById('jobEnd').value,
+    workHours:      collectHours(),
+    standbyDays:    collectTable('standbyBody', 'sb_date[]', 'sb_people[]'),
+    travelDays:     collectTable('travelBody',  'tr_date[]', 'tr_people[]'),
+    perDiemPeople:  document.getElementById('perDiemPeople').value,
+    perDiemDays:    document.getElementById('perDiemDays').value,
     logisticsHours: document.getElementById('logisticsHours').value,
     cashExpenses:   document.getElementById('cashExpenses').value,
   };
 
   const btn = e.target.querySelector('[type="submit"]');
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.textContent = 'Writing to Excel…';
 
   try {
-    if (WEBHOOK_URL !== 'POWER_AUTOMATE_WEBHOOK_URL') {
-      await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    } else {
-      // Dev mode: log to console
-      console.log('PAYLOAD (dev mode):', JSON.stringify(payload, null, 2));
-      await new Promise(r => setTimeout(r, 600));
+    const token = await getAccessToken();
+    const res = await fetch(EXCEL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({ values: buildExcelRow(payload) }),
+    });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody?.error?.message || `Graph API error ${res.status}`);
     }
+
     document.getElementById('reportForm').classList.add('hidden');
     document.getElementById('successBanner').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
-    showToast('Submission failed — please check your connection');
+    showToast('Submission failed: ' + (err.message || 'unknown error'));
     console.error(err);
   } finally {
     btn.disabled = false;
@@ -461,24 +634,48 @@ function resetForm() {
   document.getElementById('reportForm').reset();
   document.getElementById('reportForm').classList.remove('hidden');
   document.getElementById('successBanner').classList.add('hidden');
-  document.getElementById('hoursBody').innerHTML = '';
+  document.getElementById('hoursBody').innerHTML   = '';
   document.getElementById('standbyBody').innerHTML = '';
-  document.getElementById('travelBody').innerHTML = '';
+  document.getElementById('travelBody').innerHTML  = '';
   addHoursRow();
 }
 
 // ── Init ───────────────────────────────────────────────────
 (async () => {
+  // 1. Handle MSAL redirect response (runs after every page load)
+  try {
+    const redirectResp = await msalInstance.handleRedirectPromise();
+    if (redirectResp) {
+      currentAccount = redirectResp.account;
+    } else {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) currentAccount = accounts[0];
+    }
+  } catch (err) {
+    console.error('MSAL error:', err);
+  }
+  updateAuthUI();
+
+  // 2. Restore form state saved before redirect (scalar fields)
+  restoreFormState();
+
+  // 3. Load config, populate dropdowns, then apply deferred state (dropdowns + tables)
   const cfg = await loadConfig();
   populateSelect(document.getElementById('vessel'), cfg.vessels, 'Select vessel…');
   populateSelect(document.getElementById('port'),   cfg.ports,   'Select port…');
+  applyDeferredState();
+
+  // 4. Wire up Other toggles
   setupOtherToggle('loadMaster', 'loadMasterOtherWrap');
   setupOtherToggle('vessel',     'vesselOtherWrap');
   setupOtherToggle('port',       'portOtherWrap');
-  addHoursRow();
-  if ('serviceWorker' in navigator) {
+
+  // 5. Add initial row only if table is empty (not restored)
+  if (!document.querySelector('#hoursBody tr')) addHoursRow();
+
+  // 6. Register service worker
+  if ('serviceWorker' in navigator)
     navigator.serviceWorker.register('sw.js').catch(console.error);
-  }
 })();
 </script>
 </body>

@@ -10,6 +10,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MHL Crew">
+  <!-- MSAL for Microsoft Graph authentication -->
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
 </head>
 <body class="theme-green">
 
@@ -32,6 +34,14 @@
   </div>
 
   <form id="crewForm" novalidate>
+
+    <!-- ── Auth Status Banner ────────────────────────────── -->
+    <div class="auth-banner" id="authBanner">
+      <span id="authInfo">Sign in with Microsoft to submit reports</span>
+      <button type="button" id="signInBtn" class="btn btn-outline"
+              style="min-height:38px;padding:6px 18px;font-size:0.85rem;"
+              onclick="signIn()">Sign in with Microsoft</button>
+    </div>
 
     <!-- ── Section A: Your Details ────────────────────────── -->
     <div class="section-card">
@@ -186,7 +196,159 @@
 <div id="toast" class="toast"></div>
 
 <script>
-const WEBHOOK_URL = 'POWER_AUTOMATE_WEBHOOK_URL';
+// ── Azure / Graph config ───────────────────────────────────
+const AZURE_CLIENT_ID  = '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a';
+const AZURE_TENANT_ID  = 'c45b6a98-5466-42bf-9671-d8e2073d7606';
+const REDIRECT_URI     = 'https://oliverbid.github.io/mhl-pwa/crew.html';
+const GRAPH_SCOPES     = ['https://graph.microsoft.com/Files.ReadWrite'];
+const EXCEL_ENDPOINT   =
+  'https://graph.microsoft.com/v1.0/me/drive/root:' +
+  '/MHL%20Forms%20Data/MHL%20Job%20Reports.xlsx:' +
+  '/workbook/tables/JobReports/rows';
+
+// ── MSAL instance ──────────────────────────────────────────
+const msalInstance = new msal.PublicClientApplication({
+  auth: {
+    clientId:    AZURE_CLIENT_ID,
+    authority:   `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
+    redirectUri: REDIRECT_URI,
+  },
+  cache: {
+    cacheLocation:          'localStorage',
+    storeAuthStateInCookie: true, // required for iOS Safari
+  },
+});
+
+let currentAccount = null;
+
+// ── Auth UI ────────────────────────────────────────────────
+function updateAuthUI() {
+  const btn  = document.getElementById('signInBtn');
+  const info = document.getElementById('authInfo');
+  if (currentAccount) {
+    const name = currentAccount.name || currentAccount.username;
+    info.textContent = `Signed in as ${name}`;
+    info.style.color = 'var(--green-dark)';
+    btn.textContent  = 'Sign out';
+    btn.onclick      = signOut;
+  } else {
+    info.textContent = 'Sign in with Microsoft to submit reports';
+    info.style.color = 'var(--muted)';
+    btn.textContent  = 'Sign in with Microsoft';
+    btn.onclick      = signIn;
+  }
+}
+
+async function signIn() {
+  saveFormState();
+  await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES });
+}
+
+function signOut() {
+  msalInstance.logoutRedirect({ account: currentAccount });
+}
+
+async function getAccessToken() {
+  if (!currentAccount) throw new Error('Not signed in');
+  try {
+    const result = await msalInstance.acquireTokenSilent({
+      scopes:  GRAPH_SCOPES,
+      account: currentAccount,
+    });
+    return result.accessToken;
+  } catch (err) {
+    if (err instanceof msal.InteractionRequiredAuthError) {
+      saveFormState();
+      await msalInstance.acquireTokenRedirect({ scopes: GRAPH_SCOPES, account: currentAccount });
+    }
+    throw err;
+  }
+}
+
+// ── Form state — saved to sessionStorage before auth redirect
+function saveFormState() {
+  try {
+    sessionStorage.setItem('mhl_crew_state', JSON.stringify({
+      crewName:      document.getElementById('crewName').value,
+      crewNameOther: document.getElementById('crewNameOther').value,
+      invoiceNumber: document.getElementById('invoiceNumber').value,
+      vessel:        document.getElementById('vessel').value,
+      vesselOther:   document.getElementById('vesselOther').value,
+      port:          document.getElementById('port').value,
+      portOther:     document.getElementById('portOther').value,
+      cashExpenses:  document.getElementById('cashExpenses').value,
+      hoursRows:   collectHours(),
+      standbyRows: collectTable('standbyBody', 'sb_date[]', 'sb_people[]'),
+      travelRows:  collectTable('travelBody',  'tr_date[]', 'tr_people[]'),
+    }));
+  } catch (e) { /* silent fail */ }
+}
+
+function restoreFormState() {
+  const raw = sessionStorage.getItem('mhl_crew_state');
+  if (!raw) return;
+  sessionStorage.removeItem('mhl_crew_state');
+  window._pendingState = JSON.parse(raw);
+  const s = window._pendingState;
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('crewName',      s.crewName);
+  set('crewNameOther', s.crewNameOther);
+  set('invoiceNumber', s.invoiceNumber);
+  if (s.crewName === 'Other') document.getElementById('crewNameOtherWrap').style.display = '';
+}
+
+function applyDeferredState() {
+  const s = window._pendingState;
+  if (!s) return;
+  window._pendingState = null;
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+  set('vessel',       s.vessel);
+  set('vesselOther',  s.vesselOther);
+  set('port',         s.port);
+  set('portOther',    s.portOther);
+  set('cashExpenses', s.cashExpenses);
+  if (s.vessel === 'Other') document.getElementById('vesselOtherWrap').style.display = '';
+  if (s.port   === 'Other') document.getElementById('portOtherWrap').style.display   = '';
+  document.getElementById('hoursBody').innerHTML   = '';
+  document.getElementById('standbyBody').innerHTML = '';
+  document.getElementById('travelBody').innerHTML  = '';
+  (s.hoursRows || []).forEach(r => {
+    addHoursRow();
+    const tr = document.querySelector('#hoursBody tr:last-child');
+    tr.querySelector('[name="h_date[]"]').value   = r.date;
+    tr.querySelector('[name="h_start[]"]').value  = r.start;
+    tr.querySelector('[name="h_finish[]"]').value = r.finish;
+    tr.querySelector('[name="h_role[]"]').value   = r.role;
+  });
+  (s.standbyRows || []).forEach(r => {
+    addStandbyRow();
+    const tr = document.querySelector('#standbyBody tr:last-child');
+    tr.querySelector('[name="sb_date[]"]').value   = r.date;
+    tr.querySelector('[name="sb_people[]"]').value = r.people;
+  });
+  (s.travelRows || []).forEach(r => {
+    addTravelRow();
+    const tr = document.querySelector('#travelBody tr:last-child');
+    tr.querySelector('[name="tr_date[]"]').value   = r.date;
+    tr.querySelector('[name="tr_people[]"]').value = r.people;
+  });
+}
+
+// ── Build Excel row — same 17 columns as owner; crew-only cols blank
+function buildExcelRow(p) {
+  const fmtHours = rows => rows.map(r =>
+    `${r.date} ${r.start}–${r.finish} | ${r.role}`
+  ).join('\n') || '';
+  const fmtDays = rows => rows.map(r => `${r.date}: ${r.people} people`).join('\n') || '';
+  return [[
+    p.submittedBy, p.submittedAt, p.crewName, p.invoiceNumber,
+    p.vessel, p.port,
+    '', '', '', '',  // client, operationType, jobStart, jobEnd — owner only
+    fmtHours(p.workHours), fmtDays(p.standbyDays), fmtDays(p.travelDays),
+    '', '', '',      // perDiemPeople, perDiemDays, logisticsHours — owner only
+    p.cashExpenses,
+  ]];
+}
 
 // ── Load config ────────────────────────────────────────────
 async function loadConfig() {
@@ -202,25 +364,30 @@ function populateSelect(selectEl, items, placeholder) {
   selectEl.innerHTML = `<option value="">${placeholder}</option>`;
   items.forEach(item => {
     const opt = document.createElement('option');
-    opt.value = item;
-    opt.textContent = item;
+    opt.value = item; opt.textContent = item;
     selectEl.appendChild(opt);
   });
   const other = document.createElement('option');
-  other.value = 'Other';
-  other.textContent = 'Other';
+  other.value = 'Other'; other.textContent = 'Other';
   selectEl.appendChild(other);
 }
 
 function setupOtherToggle(selectId, wrapId) {
-  const sel = document.getElementById(selectId);
+  const sel  = document.getElementById(selectId);
   const wrap = document.getElementById(wrapId);
   sel.addEventListener('change', () => {
     wrap.style.display = sel.value === 'Other' ? '' : 'none';
   });
 }
 
-// ── Hours table ────────────────────────────────────────────
+// ── Table builders ─────────────────────────────────────────
+function numOpts(min, max, def = 1) {
+  let html = '';
+  for (let i = min; i <= max; i++)
+    html += `<option value="${i}"${i === def ? ' selected' : ''}>${i}</option>`;
+  return html;
+}
+
 function addHoursRow() {
   const tbody = document.getElementById('hoursBody');
   const tr = document.createElement('tr');
@@ -237,17 +404,8 @@ function addHoursRow() {
         <option>Diver</option>
       </select>
     </td>
-    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
-  `;
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
   tbody.appendChild(tr);
-}
-
-function numOpts(min, max, def = 1) {
-  let html = '';
-  for (let i = min; i <= max; i++) {
-    html += `<option value="${i}"${i === def ? ' selected' : ''}>${i}</option>`;
-  }
-  return html;
 }
 
 function addStandbyRow() {
@@ -256,8 +414,7 @@ function addStandbyRow() {
   tr.innerHTML = `
     <td class="col-date"><input type="date" name="sb_date[]"></td>
     <td><select name="sb_people[]">${numOpts(1,6)}</select></td>
-    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
-  `;
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
@@ -267,8 +424,7 @@ function addTravelRow() {
   tr.innerHTML = `
     <td class="col-date"><input type="date" name="tr_date[]"></td>
     <td><select name="tr_people[]">${numOpts(1,6)}</select></td>
-    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>
-  `;
+    <td class="col-del"><button type="button" class="btn btn-danger" onclick="this.closest('tr').remove()">✕</button></td>`;
   tbody.appendChild(tr);
 }
 
@@ -319,51 +475,57 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 4000);
 }
 
 // ── Submit ─────────────────────────────────────────────────
 document.getElementById('crewForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (!validate()) { showToast('Please fill in all required fields'); return; }
+  if (!currentAccount) { showToast('Please sign in with Microsoft first'); return; }
 
   const name   = document.getElementById('crewName').value;
   const vessel = document.getElementById('vessel').value;
   const port   = document.getElementById('port').value;
 
   const payload = {
-    submittedBy: 'crew',
-    submittedAt: new Date().toISOString(),
-    crewName:      name === 'Other' ? document.getElementById('crewNameOther').value : name,
+    submittedBy:   'crew',
+    submittedAt:   new Date().toISOString(),
+    crewName:      name   === 'Other' ? document.getElementById('crewNameOther').value : name,
     invoiceNumber: document.getElementById('invoiceNumber').value,
-    vessel: vessel === 'Other' ? document.getElementById('vesselOther').value : vessel,
-    port:   port   === 'Other' ? document.getElementById('portOther').value   : port,
-    workHours:   collectHours(),
-    standbyDays: collectTable('standbyBody', 'sb_date[]', 'sb_people[]'),
-    travelDays:  collectTable('travelBody',  'tr_date[]', 'tr_people[]'),
-    cashExpenses: document.getElementById('cashExpenses').value,
+    vessel:        vessel === 'Other' ? document.getElementById('vesselOther').value   : vessel,
+    port:          port   === 'Other' ? document.getElementById('portOther').value     : port,
+    workHours:     collectHours(),
+    standbyDays:   collectTable('standbyBody', 'sb_date[]', 'sb_people[]'),
+    travelDays:    collectTable('travelBody',  'tr_date[]', 'tr_people[]'),
+    cashExpenses:  document.getElementById('cashExpenses').value,
   };
 
   const btn = e.target.querySelector('[type="submit"]');
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.textContent = 'Writing to Excel…';
 
   try {
-    if (WEBHOOK_URL !== 'POWER_AUTOMATE_WEBHOOK_URL') {
-      await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-    } else {
-      console.log('PAYLOAD (dev mode):', JSON.stringify(payload, null, 2));
-      await new Promise(r => setTimeout(r, 600));
+    const token = await getAccessToken();
+    const res = await fetch(EXCEL_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type':  'application/json',
+      },
+      body: JSON.stringify({ values: buildExcelRow(payload) }),
+    });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody?.error?.message || `Graph API error ${res.status}`);
     }
+
     document.getElementById('crewForm').classList.add('hidden');
     document.getElementById('successBanner').classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
-    showToast('Submission failed — please check your connection');
+    showToast('Submission failed: ' + (err.message || 'unknown error'));
     console.error(err);
   } finally {
     btn.disabled = false;
@@ -371,28 +533,53 @@ document.getElementById('crewForm').addEventListener('submit', async e => {
   }
 });
 
+// ── Reset ──────────────────────────────────────────────────
 function resetForm() {
   document.getElementById('crewForm').reset();
   document.getElementById('crewForm').classList.remove('hidden');
   document.getElementById('successBanner').classList.add('hidden');
-  document.getElementById('hoursBody').innerHTML = '';
+  document.getElementById('hoursBody').innerHTML   = '';
   document.getElementById('standbyBody').innerHTML = '';
-  document.getElementById('travelBody').innerHTML = '';
+  document.getElementById('travelBody').innerHTML  = '';
   addHoursRow();
 }
 
 // ── Init ───────────────────────────────────────────────────
 (async () => {
+  // 1. Handle MSAL redirect response
+  try {
+    const redirectResp = await msalInstance.handleRedirectPromise();
+    if (redirectResp) {
+      currentAccount = redirectResp.account;
+    } else {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) currentAccount = accounts[0];
+    }
+  } catch (err) {
+    console.error('MSAL error:', err);
+  }
+  updateAuthUI();
+
+  // 2. Restore scalar form fields saved before redirect
+  restoreFormState();
+
+  // 3. Load config, populate dropdowns, apply deferred state (dropdowns + tables)
   const cfg = await loadConfig();
   populateSelect(document.getElementById('vessel'), cfg.vessels, 'Select vessel…');
   populateSelect(document.getElementById('port'),   cfg.ports,   'Select port…');
+  applyDeferredState();
+
+  // 4. Wire up Other toggles
   setupOtherToggle('crewName', 'crewNameOtherWrap');
   setupOtherToggle('vessel',   'vesselOtherWrap');
   setupOtherToggle('port',     'portOtherWrap');
-  addHoursRow();
-  if ('serviceWorker' in navigator) {
+
+  // 5. Add initial row only if table is empty
+  if (!document.querySelector('#hoursBody tr')) addHoursRow();
+
+  // 6. Register service worker
+  if ('serviceWorker' in navigator)
     navigator.serviceWorker.register('sw.js').catch(console.error);
-  }
 })();
 </script>
 </body>
