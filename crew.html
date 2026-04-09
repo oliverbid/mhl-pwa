@@ -40,7 +40,7 @@
       <span id="authInfo">Sign in with Microsoft to submit reports</span>
       <button type="button" id="signInBtn" class="btn btn-outline"
               style="min-height:38px;padding:6px 18px;font-size:0.85rem;"
-              onclick="signIn()">Sign in with Microsoft</button>
+              disabled>Initialising…</button>
     </div>
 
     <!-- ── Section A: Your Details ────────────────────────── -->
@@ -206,25 +206,15 @@ const EXCEL_ENDPOINT   =
   '/MHL%20Forms%20Data/MHL%20Job%20Reports.xlsx:' +
   '/workbook/tables/JobReports/rows';
 
-// ── MSAL instance ──────────────────────────────────────────
-const msalInstance = new msal.PublicClientApplication({
-  auth: {
-    clientId:    AZURE_CLIENT_ID,
-    authority:   `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
-    redirectUri: REDIRECT_URI,
-  },
-  cache: {
-    cacheLocation:          'localStorage',
-    storeAuthStateInCookie: true, // required for iOS Safari
-  },
-});
-
+// ── MSAL instance (declared here, instantiated inside init) ──
+let msalInstance = null;
 let currentAccount = null;
 
 // ── Auth UI ────────────────────────────────────────────────
 function updateAuthUI() {
   const btn  = document.getElementById('signInBtn');
   const info = document.getElementById('authInfo');
+  btn.disabled = false;
   if (currentAccount) {
     const name = currentAccount.name || currentAccount.username;
     info.textContent = `Signed in as ${name}`;
@@ -546,7 +536,24 @@ function resetForm() {
 
 // ── Init ───────────────────────────────────────────────────
 (async () => {
-  // 1. Handle MSAL redirect response
+  // 1. Instantiate MSAL here so it is never accessed before this point
+  msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId:    AZURE_CLIENT_ID,
+      authority:   `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
+      redirectUri: REDIRECT_URI,
+    },
+    cache: {
+      cacheLocation:          'localStorage',
+      storeAuthStateInCookie: true, // required for iOS Safari
+    },
+  });
+  // initialize() is required in MSAL v3+ and a no-op in v2 — call it safely
+  if (typeof msalInstance.initialize === 'function') {
+    await msalInstance.initialize();
+  }
+
+  // 2. Handle MSAL redirect response
   try {
     const redirectResp = await msalInstance.handleRedirectPromise();
     if (redirectResp) {
@@ -558,23 +565,23 @@ function resetForm() {
   } catch (err) {
     console.error('MSAL error:', err);
   }
-  updateAuthUI();
+  updateAuthUI(); // enables & wires the sign-in button only after MSAL is ready
 
-  // 2. Restore scalar form fields saved before redirect
+  // 3. Restore scalar form fields saved before redirect
   restoreFormState();
 
-  // 3. Load config, populate dropdowns, apply deferred state (dropdowns + tables)
+  // 4. Load config, populate dropdowns, apply deferred state (dropdowns + tables)
   const cfg = await loadConfig();
   populateSelect(document.getElementById('vessel'), cfg.vessels, 'Select vessel…');
   populateSelect(document.getElementById('port'),   cfg.ports,   'Select port…');
   applyDeferredState();
 
-  // 4. Wire up Other toggles
+  // 5. Wire up Other toggles
   setupOtherToggle('crewName', 'crewNameOtherWrap');
   setupOtherToggle('vessel',   'vesselOtherWrap');
   setupOtherToggle('port',     'portOtherWrap');
 
-  // 5. Add initial row only if table is empty
+  // 6. Add initial row only if table is empty
   if (!document.querySelector('#hoursBody tr')) addHoursRow();
 
   // 6. Register service worker
