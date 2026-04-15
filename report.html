@@ -635,7 +635,7 @@ function resetForm() {
   // 1. Instantiate MSAL here so it is never accessed before this point
   msalInstance = new msal.PublicClientApplication({
     auth: {
-      clientId: '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a',
+      clientId:   '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a',
       authority:  `https://login.microsoftonline.com/${TENANT_ID}`,
       redirectUri: REDIRECT_URI,
     },
