@@ -269,8 +269,8 @@
 
 <script>
 // ── Azure / Graph config ───────────────────────────────────
-const AZURE_CLIENT_ID  = '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a';
-const AZURE_TENANT_ID  = 'c45b6a98-5466-42bf-9671-d8e2073d7606';
+const 82cfd76a-a3ff-4861-b0a8-9a1f267efc9a  = '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a';
+const c45b6a98-5466-42bf-9671-d8e2073d7606  = 'c45b6a98-5466-42bf-9671-d8e2073d7606';
 const REDIRECT_URI     = 'https://oliverbid.github.io/mhl-pwa/report.html';
 const GRAPH_SCOPES     = ['https://graph.microsoft.com/Files.ReadWrite'];
 const EXCEL_ENDPOINT   =
@@ -635,8 +635,8 @@ function resetForm() {
   // 1. Instantiate MSAL here so it is never accessed before this point
   msalInstance = new msal.PublicClientApplication({
     auth: {
-      clientId:    AZURE_CLIENT_ID,
-      authority:   `https://login.microsoftonline.com/${AZURE_TENANT_ID}`,
+      clientId:    82cfd76a-a3ff-4861-b0a8-9a1f267efc9a,
+      authority:   `https://login.microsoftonline.com/${c45b6a98-5466-42bf-9671-d8e2073d7606}`,
       redirectUri: REDIRECT_URI,
     },
     cache: {
