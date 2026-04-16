@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MHL">
   <!-- MSAL for Microsoft Graph authentication -->
-  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>h
 </head>
 <body>
 
@@ -423,7 +423,7 @@ function buildExcelRow(p) {
   ).join('\n') || '';
   const fmtDays = rows => rows.map(r => `${r.date}: ${r.people} people`).join('\n') || '';
   return [[
-    p.submittedBy, p.submittedAt, p.loadMaster, p.invoiceNumber,
+    p.submittedAt, p.submittedBy, p.loadMaster, p.invoiceNumber,
     p.vessel, p.port, p.client, p.operationType, p.jobStart, p.jobEnd,
     fmtHours(p.workHours), fmtDays(p.standbyDays), fmtDays(p.travelDays),
     p.perDiemPeople, p.perDiemDays, p.logisticsHours, p.cashExpenses,
