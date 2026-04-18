@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>MHL Services â Create Invoice</title>
+  <title>MHL Services - Create Invoice</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#185FA5">
@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="MHL">
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
   <style>
-    /* ââ Invoice page specific styles ââ */
+    /*  Invoice page specific styles  */
     .job-card {
       background: var(--white);
       border-radius: 12px;
@@ -290,7 +290,7 @@
     <div class="auth-banner" id="authBanner">
       <span id="authInfo">Sign in with Microsoft to create invoices</span>
       <button type="button" id="signInBtn" class="btn btn-outline"
-        style="min-height:38px;padding:6px 18px;font-size:0.85rem;" disabled>Initialisingâ¦</button>
+        style="min-height:38px;padding:6px 18px;font-size:0.85rem;" disabled>Initialising...</button>
     </div>
 
     <!-- Main content (hidden until signed in) -->
@@ -312,7 +312,7 @@
       </div>
 
       <div id="jobsList">
-        <div class="loading-state">Loading submissionsâ¦</div>
+        <div class="loading-state">Loading submissions...</div>
       </div>
     </div>
   </main>
@@ -320,7 +320,7 @@
   <div id="toast" class="toast"></div>
 
   <script>
-    // ââ Config ââââââââââââââââââââââââââââââââââââââââââââââ
+    //  Config 
     const CLIENT_ID    = '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a';
     const TENANT_ID    = 'c45b6a98-5466-42bf-9671-d8e2073d7606';
     const REDIRECT_URI = 'https://oliverbid.github.io/mhl-pwa/invoice.html';
@@ -346,7 +346,7 @@
     let currentFilter = 'pending';
     let generatedInvoices = new Set(); // track what's been generated this session
 
-    // ââ Auth ââââââââââââââââââââââââââââââââââââââââââââââââ
+    //  Auth 
     function updateAuthUI() {
       const btn  = document.getElementById('signInBtn');
       const info = document.getElementById('authInfo');
@@ -388,7 +388,7 @@
       }
     }
 
-    // ââ Graph helpers âââââââââââââââââââââââââââââââââââââââ
+    //  Graph helpers 
     async function graphGet(path) {
       const token = await getToken();
       const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
@@ -415,10 +415,10 @@
       return res.json();
     }
 
-    // ââ Load all submissions from Excel âââââââââââââââââââââ
+    //  Load all submissions from Excel 
     async function loadSubmissions() {
       const list = document.getElementById('jobsList');
-      list.innerHTML = '<div class="loading-state">Loading submissionsâ¦</div>';
+      list.innerHTML = '<div class="loading-state">Loading submissions...</div>';
       try {
         const data = await graphGet(
           `/me/drive/root:${REPORTS_FILE}:/workbook/tables/JobReports/rows`
@@ -448,7 +448,7 @@
         }).filter(r => r.vessel || r.port);
         renderJobs();
       } catch (err) {
-        list.innerHTML = `<div class="empty-state"><div class="empty-icon">â ï¸</div><p>Could not load submissions.<br><small>${err.message}</small></p></div>`;
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Could not load submissions.<br><small>${err.message}</small></p></div>`;
       }
     }
 
@@ -481,7 +481,7 @@
       const values = totals.map(t => t.total);
       if (!values.every(v => v === values[0])) {
         const max = Math.max(...values);
-        return { totals, max, message: `Hour discrepancy detected â using highest value (${max} LM hours)` };
+        return { totals, max, message: `Hour discrepancy detected - using highest value (${max} LM hours)` };
       }
       return null;
     }
@@ -519,7 +519,7 @@
       const groups = groupSubmissions(allSubmissions);
       const filtered = currentFilter === 'pending' ? groups.filter(g => !generatedInvoices.has(jobKey(g))) : groups;
       document.getElementById('jobCount').textContent = `${filtered.length} ${currentFilter === 'pending' ? 'Pending' : 'Total'} Job${filtered.length !== 1 ? 's' : ''}`;
-      if (filtered.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon">â</div><p>${currentFilter === 'pending' ? 'All jobs have been invoiced!' : 'No submissions yet.'}</p></div>`; return; }
+      if (filtered.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>${currentFilter === 'pending' ? 'All jobs have been invoiced!' : 'No submissions yet.'}</p></div>`; return; }
       list.innerHTML = filtered.map(group => renderJobCard(group)).join('');
     }
 
@@ -546,7 +546,7 @@
         const ts = tsDate;
         return `<div class="submission-row"><div class="sub-header"><span class="sub-name">${sub.loadMaster || 'Unknown'}</span><span class="sub-time">${ts}</span></div><div class="hours-grid"><div class="hours-cell"><div class="hc-label">Days</div><div class="hc-value">${lines.length}</div></div><div class="hours-cell"><div class="hc-label">LM Shifts</div><div class="hc-value">${totalLM}</div></div><div class="hours-cell"><div class="hc-label">DH Shifts</div><div class="hc-value">${totalDH}</div></div></div></div>`;
       }).join('');
-      return `<div class="job-card"><div class="job-card-header"><h3>${group.vessel} â ${group.port}</h3><span class="inv-badge">${invNum ? 'INV ' + invNum : 'No inv. number yet'}<span class="submission-count">${group.submissions.length} submission${group.submissions.length !== 1 ? 's' : ''}</span></span></div><div class="job-card-body"><div class="job-meta"><span><strong>Client:</strong> ${group.client}</span><span><strong>Type:</strong> ${group.operationType}</span><span><strong>Dates:</strong> ${group.jobStart} â ${group.jobEnd}</span></div><div class="submissions-title">Submissions</div>${submissionRows}${conflict ? `<div class="conflict-warning">â ï¸ ${conflict.message}</div>` : ''}</div><div class="invoice-actions">${alreadyGenerated ? `<div class="success-link">â Invoice created this session</div>` : `<input class="invoice-num-input" type="number" placeholder="Invoice number" id="inv-${key.replace(/[^A-Z0-9]/g,'_')}" value="${invNum}" min="1"><button class="btn-generate" onclick="generateInvoice('${key}', this)"><div class="spinner"></div><span class="btn-label">ð Generate Invoice</span></button>`}</div></div>`;
+      return `<div class="job-card"><div class="job-card-header"><h3>${group.vessel} - ${group.port}</h3><span class="inv-badge">${invNum ? 'INV ' + invNum : 'No inv. number yet'}<span class="submission-count">${group.submissions.length} submission${group.submissions.length !== 1 ? 's' : ''}</span></span></div><div class="job-card-body"><div class="job-meta"><span><strong>Client:</strong> ${group.client}</span><span><strong>Type:</strong> ${group.operationType}</span><span><strong>Dates:</strong> ${group.jobStart} - ${group.jobEnd}</span></div><div class="submissions-title">Submissions</div>${submissionRows}${conflict ? `<div class="conflict-warning">⚠️ ${conflict.message}</div>` : ''}</div><div class="invoice-actions">${alreadyGenerated ? `<div class="success-link">✅ Invoice created this session</div>` : `<input class="invoice-num-input" type="number" placeholder="Invoice number" id="inv-${key.replace(/[^A-Z0-9]/g,'_')}" value="${invNum}" min="1"><button class="btn-generate" onclick="generateInvoice('${key}', this)"><div class="spinner"></div><span class="btn-label">📄 Generate Invoice</span></button>`}</div></div>`;
     }
 
     function cleanStr(s) {
@@ -589,7 +589,7 @@
         generatedInvoices.add(key);
         const newFileRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:${WORKING_FOLDER}/${encodeURIComponent(destName)}`, { headers: { Authorization: `Bearer ${token}` } });
         const newFile = newFileRes.ok ? await newFileRes.json() : null;
-        btn.closest('.invoice-actions').innerHTML = `<div class="success-link">â Invoice created: <a href="${newFile?.webUrl || '#'}" target="_blank">${destName}</a></div>`;
+        btn.closest('.invoice-actions').innerHTML = `<div class="success-link">✅ Invoice created: <a href="${newFile?.webUrl || '#'}" target="_blank">${destName}</a></div>`;
         showToast(`Invoice ${invNum} created successfully!`);
       } catch (err) { showToast('Error: ' + err.message); btn.classList.remove('loading'); btn.disabled = false; }
     }
