@@ -474,7 +474,34 @@
       await wrt('B21', [[opWord + ' yachts on board the ' + cleanStr(group.vessel) + ' in ' + portName]]);
 
       // -- Parse data --
-      const md = mergeSubmissions(group);
+      // Merge all submissions into one combined dataset
+      const md = group.submissions.reduce((acc, sub) => {
+        if (!acc.workHours) return {...sub};
+        // Combine workHours - take all lines, deduplicate by date keeping max values
+        const hours = {};
+        [...acc.workHours.split('\n'), ...sub.workHours.split('\n')].filter(Boolean).forEach(line => {
+          const dm = line.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (!dm) return;
+          const d = dm[1];
+          const lm = parseInt((line.match(/LM:(\d+)/)||[0,0])[1]);
+          const dh = parseInt((line.match(/DH:(\d+)/)||[0,0])[1]);
+          const cr = parseInt((line.match(/Crane:(\d+)/)||[0,0])[1]);
+          const di = parseInt((line.match(/Diver:(\d+)/)||[0,0])[1]);
+          if (!hours[d]) hours[d] = line;
+          else {
+            const pl = hours[d];
+            const plm = parseInt((pl.match(/LM:(\d+)/)||[0,0])[1]);
+            if (lm > plm) hours[d] = line;
+          }
+        });
+        return {
+          ...acc,
+          workHours: Object.values(hours).join('\n'),
+          standbyDays: acc.standbyDays || sub.standbyDays,
+          travelDays: acc.travelDays || sub.travelDays,
+          logisticsHours: Math.max(parseFloat(acc.logisticsHours)||0, parseFloat(sub.logisticsHours)||0),
+        };
+      }, {});
       const wdays = parseWorkHours(md.workHours);
       const sbDays = parseDays(md.standbyDays);
       const trDays = parseDays(md.travelDays);
