@@ -525,6 +525,11 @@
 
     function jobKey(group) { return `${group.vessel.trim().toUpperCase()}||${group.port.trim().toUpperCase()}`; }
 
+    function fmtDate(v) {
+      if (!v) return '';
+      if (!isNaN(Number(v))) return new Date(Math.round((Number(v) - 25569) * 86400 * 1000)).toLocaleDateString('en-GB');
+      return new Date(v).toLocaleDateString('en-GB');
+    }
     function renderJobCard(group) {
       const key = jobKey(group);
       const conflict = checkConflicts(group.submissions);
@@ -534,7 +539,11 @@
         const lines = (sub.workHours || '').split('\n').filter(Boolean);
         const totalLM = lines.reduce((acc, l) => { const m = l.match(/LM:(\d+)/); return acc + (m ? parseInt(m[1]) : 0); }, 0);
         const totalDH = lines.reduce((acc, l) => { const m = l.match(/DH:(\d+)/); return acc + (m ? parseInt(m[1]) : 0); }, 0);
-        const ts = sub.timestamp ? new Date(sub.timestamp).toLocaleDateString('en-GB') : '';
+        const tsRaw = sub.timestamp;
+        const tsDate = tsRaw && !isNaN(Number(tsRaw))
+          ? new Date(Math.round((Number(tsRaw) - 25569) * 86400 * 1000)).toLocaleDateString('en-GB')
+          : tsRaw ? new Date(tsRaw).toLocaleDateString('en-GB') : '';
+        const ts = tsDate;
         return `<div class="submission-row"><div class="sub-header"><span class="sub-name">${sub.loadMaster || 'Unknown'}</span><span class="sub-time">${ts}</span></div><div class="hours-grid"><div class="hours-cell"><div class="hc-label">Days</div><div class="hc-value">${lines.length}</div></div><div class="hours-cell"><div class="hc-label">LM Shifts</div><div class="hc-value">${totalLM}</div></div><div class="hours-cell"><div class="hc-label">DH Shifts</div><div class="hc-value">${totalDH}</div></div></div></div>`;
       }).join('');
       return `<div class="job-card"><div class="job-card-header"><h3>${group.vessel} â ${group.port}</h3><span class="inv-badge">${invNum ? 'INV ' + invNum : 'No inv. number yet'}<span class="submission-count">${group.submissions.length} submission${group.submissions.length !== 1 ? 's' : ''}</span></span></div><div class="job-card-body"><div class="job-meta"><span><strong>Client:</strong> ${group.client}</span><span><strong>Type:</strong> ${group.operationType}</span><span><strong>Dates:</strong> ${group.jobStart} â ${group.jobEnd}</span></div><div class="submissions-title">Submissions</div>${submissionRows}${conflict ? `<div class="conflict-warning">â ï¸ ${conflict.message}</div>` : ''}</div><div class="invoice-actions">${alreadyGenerated ? `<div class="success-link">â Invoice created this session</div>` : `<input class="invoice-num-input" type="number" placeholder="Invoice number" id="inv-${key.replace(/[^A-Z0-9]/g,'_')}" value="${invNum}" min="1"><button class="btn-generate" onclick="generateInvoice('${key}', this)"><div class="spinner"></div><span class="btn-label">ð Generate Invoice</span></button>`}</div></div>`;
@@ -552,9 +561,10 @@
         const client = group.client || '';
         const templateName = TEMPLATE_MAP[client] || TEMPLATE_MAP['default'];
         const today = new Date().toISOString().slice(0,10);
-        const vesselClean = group.vessel.toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim();
-        const portClean = group.port.toUpperCase().replace(/.*-\s*/,'').trim().split(' ')[0];
-        const destName = `MHEINV ${invNum} ${today} ${vesselClean} - ${portClean}.xlsx`;
+        const sanitize = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+        const vesselClean = group.vessel.replace(/[^\x20-\x7E]/g,'').replace(/[^A-Za-z0-9 ]/g,'').trim().toUpperCase();
+        const portClean = group.port.replace(/[^\x20-\x7E]/g,'').replace(/[^A-Za-z0-9 ]/g,'').replace(/^[A-Z]{2,4}\s+/,'').trim().toUpperCase().split(' ').slice(0,2).join(' ');
+        const destName = `MHL INV ${invNum} ${today} ${vesselClean} - ${portClean}.xlsx`;
         const token = await getToken();
         const templatePath = encodeURIComponent(`/Documents/Claude Work/Accounts/${templateName}`);
         const templateRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:${templatePath}`, { headers: { Authorization: `Bearer ${token}` } });
