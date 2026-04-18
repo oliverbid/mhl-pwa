@@ -300,7 +300,7 @@
         const templateName = TEMPLATE_MAP[client] || TEMPLATE_MAP['default'];
         const today = new Date().toISOString().slice(0,10);
         const vesselClean = cleanStr(group.vessel).split(' ').slice(0,3).join(' ');
-        const portClean = cleanStr(group.port).split(' ').slice(0,2).join(' ');
+        const portClean = cleanStr(group.port).split(' ')[0];
         const destName = 'MHL INV ' + invNum + ' ' + today + ' ' + vesselClean + ' - ' + portClean + '.xlsx';
         const token = await getToken();
 
