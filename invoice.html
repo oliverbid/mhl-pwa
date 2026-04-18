@@ -273,7 +273,7 @@
       const actionHtml = done
         ? '<div class="success-link">Invoice created this session</div>'
         : '<input class="invoice-num-input" type="number" placeholder="Invoice number" id="' + inputId + '" value="' + invNum + '" min="1">' +
-          '<button class="btn-generate" onclick="generateInvoice('' + key + '',this)">' +
+          '<button class="btn-generate" onclick="generateInvoice(\'' + key + '\',this)">' +
           '<div class="spinner"></div><span class="btn-label">Generate Invoice</span></button>';
 
       return '<div class="job-card">' +
