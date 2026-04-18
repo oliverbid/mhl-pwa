@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>MHL Services â Create Invoice</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#185FA5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MHL">
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
+  <style>
+    /* ââ Invoice page specific styles ââ */
+    .job-card {
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .job-card-header {
+      background: var(--blue-dark);
+      color: white;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .job-card-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .job-card-header .inv-badge {
+      background: rgba(255,255,255,0.18);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .job-card-body {
+      padding: 16px 18px;
+    }
+    .job-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .job-meta span strong {
+      color: var(--text);
+    }
+    .submissions-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .submission-row {
+      background: #f8fafc;
+      border: 1px solid #e8eef4;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+    .submission-row .sub-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .submission-row .sub-name {
+      font-weight: 600;
+      color: var(--blue-dark);
+    }
+    .submission-row .sub-time {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .hours-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      font-size: 0.78rem;
+    }
+    .hours-cell {
+      background: white;
+      border: 1px solid #dde5ed;
+      border-radius: 6px;
+      padding: 5px 8px;
+    }
+    .hours-cell .hc-label {
+      color: var(--muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .hours-cell .hc-value {
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 2px;
+    }
+    .conflict-warning {
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      color: #7a5c00;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .invoice-actions {
+      border-top: 1px solid #e8eef4;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .invoice-num-input {
+      flex: 1;
+      min-width: 140px;
+      max-width: 200px;
+      padding: 8px 12px;
+      border: 1.5px solid #c8d6e2;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: white;
+    }
+    .invoice-num-input:focus {
+      outline: none;
+      border-color: var(--blue-dark);
+    }
+    .btn-generate {
+      background: #1a7a3e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .btn-generate:hover { background: #156634; }
+    .btn-generate:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    .btn-generate .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .btn-generate.loading .spinner { display: block; }
+    .btn-generate.loading .btn-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .success-link {
+      background: #e8f5e9;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #1b5e20;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .success-link a {
+      color: #1a7a3e;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+    .empty-state p {
+      font-size: 0.95rem;
+    }
+    .loading-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .refresh-btn {
+      background: none;
+      border: 1.5px solid var(--blue-dark);
+      color: var(--blue-dark);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .refresh-btn:hover { background: #f0f5fa; }
+    .page-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .page-actions h2 {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #c8d6e2;
+      background: white;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .filter-tab.active {
+      background: var(--blue-dark);
+      border-color: var(--blue-dark);
+      color: white;
+    }
+    .submission-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.25);
+      border-radius: 12px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1>MHL Services</h1>
+      <span class="subtitle">Create Invoice</span>
+    </div>
+    <a href="admin.html" class="settings-btn" title="Admin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </a>
+  </header>
+
+  <main class="main-content">
+    <!-- Auth Banner -->
+    <div class="auth-banner" id="authBanner">
+      <span id="authInfo">Sign in with Microsoft to create invoices</span>
+      <button type="button" id="signInBtn" class="btn btn-outline"
+        style="min-height:38px;padding:6px 18px;font-size:0.85rem;" disabled>Initialisingâ¦</button>
+    </div>
+
+    <!-- Main content (hidden until signed in) -->
+    <div id="mainContent" style="display:none;">
+      <div class="page-actions">
+        <h2 id="jobCount">Pending Jobs</h2>
+        <button class="refresh-btn" onclick="loadSubmissions()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('pending', this)">Pending</button>
+        <button class="filter-tab" onclick="setFilter('all', this)">All Jobs</button>
+      </div>
+
+      <div id="jobsList">
+        <div class="loading-state">Loading submissionsâ¦</div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // ââ Config ââââââââââââââââââââââââââââââââââââââââââââââ
+    const CLIENT_ID    = '82cfd76a-a3ff-4861-b0a8-9a1f267efc9a';
+    const TENANT_ID    = 'c45b6a98-5466-42bf-9671-d8e2073d7606';
+    const REDIRECT_URI = 'https://oliverbid.github.io/mhl-pwa/invoice.html';
+    const GRAPH_SCOPES = ['https://graph.microsoft.com/Files.ReadWrite'];
+
+    // OneDrive paths
+    const REPORTS_FILE  = '/MHL%20Forms%20Data/MHL%20Job%20Reports.xlsx';
+    const WORKING_FOLDER= '/MHL%20SERVICES/INVOICES%20WORKING%202026';
+    const TEMPLATES_FOLDER = '/Documents/Claude%20Work/Accounts';
+
+    // Template mapping by client
+    const TEMPLATE_MAP = {
+      'Cross Chartering NV':   'NEW CROSS BLANK INVOICE 2026.xlsx',
+      'Ocean 7 Chartering':    'NEW OCEAN TRANSPORT INVOICE 2026.xlsx',
+      'FMT':                   'NEW FMT BLANK INVOICE 2026.xlsx',
+      'MHL Rentals':           'NEW MHL RENTALS INVOICE BLANK 2026.xlsx',
+      'default':               'NEW OTHER BLANK INVOICE 2026.xlsx',
+    };
+
+    let msalInstance = null;
+    let currentAccount = null;
+    let allSubmissions = [];
+    let currentFilter = 'pending';
+    let generatedInvoices = new Set(); // track what's been generated this session
+
+    // ââ Auth ââââââââââââââââââââââââââââââââââââââââââââââââ
+    function updateAuthUI() {
+      const btn  = document.getElementById('signInBtn');
+      const info = document.getElementById('authInfo');
+      btn.disabled = false;
+      if (currentAccount) {
+        info.textContent = `Signed in as ${currentAccount.name || currentAccount.username}`;
+        info.style.color = 'var(--blue-dark)';
+        btn.textContent  = 'Sign out';
+        btn.onclick      = signOut;
+        document.getElementById('mainContent').style.display = 'block';
+        loadSubmissions();
+      } else {
+        info.textContent = 'Sign in with Microsoft to create invoices';
+        info.style.color = 'var(--muted)';
+        btn.textContent  = 'Sign in with Microsoft';
+        btn.onclick      = signIn;
+        document.getElementById('mainContent').style.display = 'none';
+      }
+    }
+
+    async function signIn() {
+      await msalInstance.loginRedirect({ scopes: GRAPH_SCOPES });
+    }
+
+    function signOut() {
+      msalInstance.logoutRedirect({ account: currentAccount });
+    }
+
+    async function getToken() {
+      if (!currentAccount) throw new Error('Not signed in');
+      try {
+        const r = await msalInstance.acquireTokenSilent({ scopes: GRAPH_SCOPES, account: currentAccount });
+        return r.accessToken;
+      } catch (e) {
+        if (e instanceof msal.InteractionRequiredAuthError) {
+          await msalInstance.acquireTokenRedirect({ scopes: GRAPH_SCOPES, account: currentAccount });
+        }
+        throw e;
+      }
+    }
+
+    // ââ Graph helpers âââââââââââââââââââââââââââââââââââââââ
+    async function graphGet(path) {
+      const token = await getToken();
+      const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Graph error ${res.status}`);
+      }
+      return res.json();
+    }
+
+    async function graphPost(path, body) {
+      const token = await getToken();
+      const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Graph error ${res.status}`);
+      }
+      return res.json();
+    }
+
+    // ââ Load all submissions from Excel âââââââââââââââââââââ
+    async function loadSubmissions() {
+      const list = document.getElementById('jobsList');
+      list.innerHTML = '<div class="loading-state">Loading submissionsâ¦</div>';
+      try {
+        const data = await graphGet(
+          `/me/drive/root:${REPORTS_FILE}:/workbook/tables/JobReports/rows`
+        );
+        allSubmissions = (data.value || []).map((row, idx) => {
+          const v = row.values[0];
+          return {
+            rowIndex: idx,
+            timestamp:     v[0]  || '',
+            formType:      v[1]  || '',
+            loadMaster:    v[2]  || '',
+            invoiceNumber: String(v[3] || '').trim(),
+            vessel:        v[4]  || '',
+            port:          v[5]  || '',
+            client:        v[6]  || '',
+            operationType: v[7]  || '',
+            jobStart:      v[8]  || '',
+            jobEnd:        v[9]  || '',
+            workHours:     v[10] || '',
+            standbyDays:   v[11] || '',
+            travelDays:    v[12] || '',
+            perDiemPeople: v[13] || 0,
+            perDiemDays:   v[14] || 0,
+            logisticsHours:v[15] || 0,
+            cashExpenses:  v[16] || '',
+          };
+        }).filter(r => r.vessel || r.port);
+        renderJobs();
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-icon">â ï¸</div><p>Could not load submissions.<br><small>${err.message}</small></p></div>`;
+      }
+    }
+
+    function groupSubmissions(submissions) {
+      const groups = {};
+      submissions.forEach(sub => {
+        const key = `${sub.vessel.trim().toUpperCase()}||${sub.port.trim().toUpperCase()}`;
+        if (!groups[key]) {
+          groups[key] = { vessel: sub.vessel, port: sub.port, client: sub.client, operationType: sub.operationType, jobStart: sub.jobStart, jobEnd: sub.jobEnd, invoiceNumber: '', submissions: [] };
+        }
+        const invNum = sub.invoiceNumber;
+        if (invNum && invNum !== '0' && invNum !== '0000' && invNum !== '') { groups[key].invoiceNumber = invNum; }
+        if (sub.jobStart) groups[key].jobStart = sub.jobStart;
+        if (sub.jobEnd) groups[key].jobEnd = sub.jobEnd;
+        if (sub.client) groups[key].client = sub.client;
+        if (sub.operationType) groups[key].operationType = sub.operationType;
+        groups[key].submissions.push(sub);
+      });
+      return Object.values(groups);
+    }
+
+    function checkConflicts(submissions) {
+      if (submissions.length < 2) return null;
+      const totals = submissions.map(sub => {
+        const lines = (sub.workHours || '').split('\n').filter(Boolean);
+        let totalLM = 0;
+        lines.forEach(line => { const m = line.match(/LM:(\d+)/); if (m) totalLM += parseInt(m[1]); });
+        return { name: sub.loadMaster, total: totalLM };
+      });
+      const values = totals.map(t => t.total);
+      if (!values.every(v => v === values[0])) {
+        const max = Math.max(...values);
+        return { totals, max, message: `Hour discrepancy detected â using highest value (${max} LM hours)` };
+      }
+      return null;
+    }
+
+    function mergeSubmissions(group) {
+      const subs = group.submissions;
+      if (subs.length === 1) return subs[0];
+      const hoursByDate = {};
+      subs.forEach(sub => {
+        (sub.workHours || '').split('\n').filter(Boolean).forEach(line => {
+          const dateMatch = line.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (!dateMatch) return;
+          const date = dateMatch[1];
+          const lm = parseInt(line.match(/LM:(\d+)/)?.[1] || 0);
+          const dh = parseInt(line.match(/DH:(\d+)/)?.[1] || 0);
+          const crane = parseInt(line.match(/Crane:(\d+)/)?.[1] || 0);
+          const diver = parseInt(line.match(/Diver:(\d+)/)?.[1] || 0);
+          if (!hoursByDate[date]) { hoursByDate[date] = { line, lm, dh, crane, diver }; }
+          else { hoursByDate[date].lm = Math.max(hoursByDate[date].lm, lm); hoursByDate[date].dh = Math.max(hoursByDate[date].dh, dh); hoursByDate[date].crane = Math.max(hoursByDate[date].crane, crane); hoursByDate[date].diver = Math.max(hoursByDate[date].diver, diver); }
+        });
+      });
+      const mergedHours = Object.entries(hoursByDate).sort(([a],[b]) => a.localeCompare(b)).map(([date, d]) => `${date} | LM:${d.lm} DH:${d.dh} Crane:${d.crane} Diver:${d.diver}`).join('\n');
+      const standbyByDate = {}, travelByDate = {};
+      subs.forEach(sub => {
+        (sub.standbyDays || '').split('\n').filter(Boolean).forEach(line => { const m = line.match(/^(.+?):\s*(\d+)/); if (m) standbyByDate[m[1]] = Math.max(standbyByDate[m[1]] || 0, parseInt(m[2])); });
+        (sub.travelDays || '').split('\n').filter(Boolean).forEach(line => { const m = line.match(/^(.+?):\s*(\d+)/); if (m) travelByDate[m[1]] = Math.max(travelByDate[m[1]] || 0, parseInt(m[2])); });
+      });
+      return { ...subs[0], workHours: mergedHours, standbyDays: Object.entries(standbyByDate).map(([d,p]) => `${d}: ${p} people`).join('\n'), travelDays: Object.entries(travelByDate).map(([d,p]) => `${d}: ${p} people`).join('\n'), perDiemPeople: Math.max(...subs.map(s => parseInt(s.perDiemPeople) || 0)), perDiemDays: Math.max(...subs.map(s => parseInt(s.perDiemDays) || 0)), logisticsHours: Math.max(...subs.map(s => parseFloat(s.logisticsHours) || 0)), cashExpenses: subs.map(s => s.cashExpenses).filter(Boolean).join('\n') };
+    }
+
+    function setFilter(filter, btn) { currentFilter = filter; document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderJobs(); }
+
+    function renderJobs() {
+      const list = document.getElementById('jobsList');
+      const groups = groupSubmissions(allSubmissions);
+      const filtered = currentFilter === 'pending' ? groups.filter(g => !generatedInvoices.has(jobKey(g))) : groups;
+      document.getElementById('jobCount').textContent = `${filtered.length} ${currentFilter === 'pending' ? 'Pending' : 'Total'} Job${filtered.length !== 1 ? 's' : ''}`;
+      if (filtered.length === 0) { list.innerHTML = `<div class="empty-state"><div class="empty-icon">â</div><p>${currentFilter === 'pending' ? 'All jobs have been invoiced!' : 'No submissions yet.'}</p></div>`; return; }
+      list.innerHTML = filtered.map(group => renderJobCard(group)).join('');
+    }
+
+    function jobKey(group) { return `${group.vessel.trim().toUpperCase()}||${group.port.trim().toUpperCase()}`; }
+
+    function renderJobCard(group) {
+      const key = jobKey(group);
+      const conflict = checkConflicts(group.submissions);
+      const alreadyGenerated = generatedInvoices.has(key);
+      const invNum = group.invoiceNumber || '';
+      const submissionRows = group.submissions.map(sub => {
+        const lines = (sub.workHours || '').split('\n').filter(Boolean);
+        const totalLM = lines.reduce((acc, l) => { const m = l.match(/LM:(\d+)/); return acc + (m ? parseInt(m[1]) : 0); }, 0);
+        const totalDH = lines.reduce((acc, l) => { const m = l.match(/DH:(\d+)/); return acc + (m ? parseInt(m[1]) : 0); }, 0);
+        const ts = sub.timestamp ? new Date(sub.timestamp).toLocaleDateString('en-GB') : '';
+        return `<div class="submission-row"><div class="sub-header"><span class="sub-name">${sub.loadMaster || 'Unknown'}</span><span class="sub-time">${ts}</span></div><div class="hours-grid"><div class="hours-cell"><div class="hc-label">Days</div><div class="hc-value">${lines.length}</div></div><div class="hours-cell"><div class="hc-label">LM Shifts</div><div class="hc-value">${totalLM}</div></div><div class="hours-cell"><div class="hc-label">DH Shifts</div><div class="hc-value">${totalDH}</div></div></div></div>`;
+      }).join('');
+      return `<div class="job-card"><div class="job-card-header"><h3>${group.vessel} â ${group.port}</h3><span class="inv-badge">${invNum ? 'INV ' + invNum : 'No inv. number yet'}<span class="submission-count">${group.submissions.length} submission${group.submissions.length !== 1 ? 's' : ''}</span></span></div><div class="job-card-body"><div class="job-meta"><span><strong>Client:</strong> ${group.client}</span><span><strong>Type:</strong> ${group.operationType}</span><span><strong>Dates:</strong> ${group.jobStart} â ${group.jobEnd}</span></div><div class="submissions-title">Submissions</div>${submissionRows}${conflict ? `<div class="conflict-warning">â ï¸ ${conflict.message}</div>` : ''}</div><div class="invoice-actions">${alreadyGenerated ? `<div class="success-link">â Invoice created this session</div>` : `<input class="invoice-num-input" type="number" placeholder="Invoice number" id="inv-${key.replace(/[^A-Z0-9]/g,'_')}" value="${invNum}" min="1"><button class="btn-generate" onclick="generateInvoice('${key}', this)"><div class="spinner"></div><span class="btn-label">ð Generate Invoice</span></button>`}</div></div>`;
+    }
+
+    async function generateInvoice(key, btn) {
+      const group = groupSubmissions(allSubmissions).find(g => jobKey(g) === key);
+      if (!group) return;
+      const inputId = `inv-${key.replace(/[^A-Z0-9]/g,'_')}`;
+      const invInput = document.getElementById(inputId);
+      const invNum = invInput?.value?.trim();
+      if (!invNum || invNum === '0') { showToast('Please enter an invoice number first'); invInput?.focus(); return; }
+      btn.classList.add('loading'); btn.disabled = true;
+      try {
+        const client = group.client || '';
+        const templateName = TEMPLATE_MAP[client] || TEMPLATE_MAP['default'];
+        const today = new Date().toISOString().slice(0,10);
+        const vesselClean = group.vessel.toUpperCase().replace(/[^A-Z0-9 ]/g,'').trim();
+        const portClean = group.port.toUpperCase().replace(/.*-\s*/,'').trim().split(' ')[0];
+        const destName = `MHEINV ${invNum} ${today} ${vesselClean} - ${portClean}.xlsx`;
+        const token = await getToken();
+        const templatePath = encodeURIComponent(`/Documents/Claude Work/Accounts/${templateName}`);
+        const templateRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:${templatePath}`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!templateRes.ok) throw new Error(`Template not found: ${templateName}`);
+        const templateFile = await templateRes.json();
+        const workingFolderRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:${WORKING_FOLDER}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null);
+        let workingFolderId;
+        if (workingFolderRes && workingFolderRes.ok) { const wf = await workingFolderRes.json(); workingFolderId = wf.id; }
+        else {
+          const parentRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:/MHL%20SERVICES`, { headers: { Authorization: `Bearer ${token}` } });
+          const parent = await parentRes.json();
+          const createRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${parent.id}/children`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'INVOICES WORKING 2026', folder: {}, '@microsoft.graph.conflictBehavior': 'fail' }) });
+          workingFolderId = (await createRes.json()).id;
+        }
+        const copyRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${templateFile.id}/copy`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ parentReference: { id: workingFolderId }, name: destName }) });
+        if (copyRes.status === 202) { await pollCopy(copyRes.headers.get('Location'), token); }
+        else if (!copyRes.ok) { const e = await copyRes.json().catch(() => ({})); throw new Error(e?.error?.message || 'Copy failed'); }
+        generatedInvoices.add(key);
+        const newFileRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/root:${WORKING_FOLDER}/${encodeURIComponent(destName)}`, { headers: { Authorization: `Bearer ${token}` } });
+        const newFile = newFileRes.ok ? await newFileRes.json() : null;
+        btn.closest('.invoice-actions').innerHTML = `<div class="success-link">â Invoice created: <a href="${newFile?.webUrl || '#'}" target="_blank">${destName}</a></div>`;
+        showToast(`Invoice ${invNum} created successfully!`);
+      } catch (err) { showToast('Error: ' + err.message); btn.classList.remove('loading'); btn.disabled = false; }
+    }
+
+    async function pollCopy(monitorUrl, token, attempts = 0) {
+      if (attempts > 30) throw new Error('Copy timed out');
+      await new Promise(r => setTimeout(r, 1500));
+      const res = await fetch(monitorUrl);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.status === 'completed') return;
+      if (data.status === 'failed') throw new Error('File copy failed');
+      return pollCopy(monitorUrl, token, attempts + 1);
+    }
+
+    function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 4000); }
+
+    (async () => {
+      msalInstance = new msal.PublicClientApplication({ auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: REDIRECT_URI }, cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: true } });
+      if (typeof msalInstance.initialize === 'function') await msalInstance.initialize();
+      try {
+        const resp = await msalInstance.handleRedirectPromise();
+        if (resp) { currentAccount = resp.account; }
+        else { const accounts = msalInstance.getAllAccounts(); if (accounts.length > 0) currentAccount = accounts[0]; }
+      } catch (err) { console.error('MSAL error:', err); }
+      updateAuthUI();
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.error);
+    })();
+  </script>
+</body>
+</html>
