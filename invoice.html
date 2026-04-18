@@ -370,10 +370,12 @@
 
     // ── Parse work hours from stored format ──────────────────────────────
     // Format: "2026-04-10 09:00-21:00 | LM:1 DH:1 Crane:0 Diver:0"
+    // -- Parse work hours from stored format --
+    // Format: "2026-04-10 09:00-21:00 | LM:1 DH:1 Crane:0 Diver:0"
     function parseWorkHours(raw) {
       return (raw || '').split('\n').filter(Boolean).map(line => {
         const dateM  = line.match(/^(\d{4}-\d{2}-\d{2})/);
-        const timeM  = line.match(/(\d{2}:\d{2})[-–](\d{2}:\d{2})/);
+        const timeM  = line.match(/(\d{2}:\d{2})[-](\d{2}:\d{2})/);
         const lmM    = line.match(/LM:(\d+)/);
         const dhM    = line.match(/DH:(\d+)/);
         const crM    = line.match(/Crane:(\d+)/);
@@ -386,230 +388,149 @@
         const dh     = parseInt(dhM ? dhM[1] : 0);
         const crane  = parseInt(crM ? crM[1] : 0);
         const diver  = parseInt(divM ? divM[1] : 0);
-        // Calculate hours between start and finish
         const [sh, sm] = start.split(':').map(Number);
         const [fh, fm] = finish.split(':').map(Number);
         const hrs = Math.round(((fh * 60 + fm) - (sh * 60 + sm)) / 60 * 2) / 2;
-        // Format date as DD-MM-YYYY
         const [y, mo, d] = date.split('-');
-        const fmtDate = d + '-' + mo + '-' + y;
-        return { date: fmtDate, start, finish, hrs, lm, dh, crane, diver };
+        return { date: d + '-' + mo + '-' + y, start, finish, hrs, lm, dh, crane, diver };
       }).filter(Boolean);
     }
 
-    // ── Parse standby/travel lines ────────────────────────────────────────
-    // Format: "2026-04-08: 1 people"
     function parseDays(raw) {
       return (raw || '').split('\n').filter(Boolean).map(line => {
         const m = line.match(/^(.*?):\s*(\d+)\s*people?/i);
         if (!m) return null;
         const dateRaw = m[1].trim();
         const people  = parseInt(m[2]);
-        // Try to format date nicely
         const dm = dateRaw.match(/(\d{4})-(\d{2})-(\d{2})/);
-        const fmtDate = dm ? dm[3] + '-' + dm[2] + '-' + dm[1] : dateRaw;
-        return { date: fmtDate, people };
+        return { date: dm ? dm[3] + '-' + dm[2] + '-' + dm[1] : dateRaw, people };
       }).filter(Boolean);
     }
 
-    // ── Main invoice fill function ────────────────────────────────────────
     async function fillInvoice(fileId, token, group, invNum, destName) {
       const base = 'https://graph.microsoft.com/v1.0/me/drive/items/' + fileId;
-      const wsBase = base + '/workbook/worksheets(\'Invoice\')';
 
-      // Helper: read a range
-      async function readRange(addr) {
-        const r = await fetch(wsBase + '/range(address=\'' + addr + '\')', {
-          headers: { Authorization: 'Bearer ' + token }
-        });
-        const d = await r.json();
-        return d.values || [];
+      // Create persistent workbook session (required for insert/delete rows)
+      const sessionRes = await fetch(base + '/workbook/createSession', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ persistChanges: true })
+      });
+      if (!sessionRes.ok) {
+        const e = await sessionRes.json().catch(() => ({}));
+        throw new Error('Session error: ' + ((e.error && e.error.message) || sessionRes.status));
+      }
+      const sessionId = (await sessionRes.json()).id;
+      const hdrs = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'workbook-session-id': sessionId };
+      const ws = base + '/workbook/worksheets(%27Invoice%27)';
+
+      async function rng(addr) {
+        const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)', { headers: hdrs });
+        if (!r.ok) { console.error('READ ' + addr + ' = ' + r.status); return []; }
+        return (await r.json()).values || [];
       }
 
-      // Helper: write values to a range
-      async function writeRange(addr, values) {
-        await fetch(wsBase + '/range(address=\'' + addr + '\')', {
-          method: 'PATCH',
-          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ values })
+      async function wrt(addr, vals) {
+        const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)', {
+          method: 'PATCH', headers: hdrs, body: JSON.stringify({ values: vals })
         });
+        if (!r.ok) console.error('WRITE ' + addr + ' = ' + r.status);
       }
 
-      // Helper: insert rows at a given row index (1-based), shifting rows down
-      async function insertRows(rowIndex, count) {
-        await fetch(base + '/workbook/worksheets(\'Invoice\')/range(address=\'A' + rowIndex + ':H' + (rowIndex + count - 1) + '\')/insert', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ shift: 'Down' })
+      async function insRows(rowIdx, count) {
+        const addr = 'A' + rowIdx + ':H' + (rowIdx + count - 1);
+        const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)/insert', {
+          method: 'POST', headers: hdrs, body: JSON.stringify({ shift: 'Down' })
         });
+        if (!r.ok) console.error('INSERT at ' + rowIdx + ' = ' + r.status);
       }
 
-      // Helper: delete a row
-      async function deleteRow(rowIndex) {
-        await fetch(base + '/workbook/worksheets(\'Invoice\')/range(address=\'A' + rowIndex + ':H' + rowIndex + '\')/delete', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ shift: 'Up' })
+      async function delRow(rowIdx) {
+        const addr = 'A' + rowIdx + ':H' + rowIdx;
+        const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)/delete', {
+          method: 'POST', headers: hdrs, body: JSON.stringify({ shift: 'Up' })
         });
+        if (!r.ok) console.error('DELETE ' + rowIdx + ' = ' + r.status);
       }
 
-      // Helper: find row number of a label in column B (search rows 28-60)
-      async function findLabelRow(label) {
-        const vals = await readRange('B28:B70');
+      async function findLabel(label) {
+        const vals = await rng('B28:B80');
         for (let i = 0; i < vals.length; i++) {
-          if (vals[i][0] && vals[i][0].toString().toLowerCase().includes(label.toLowerCase())) {
-            return 28 + i;
-          }
+          if (vals[i][0] && vals[i][0].toString().toLowerCase().includes(label.toLowerCase())) return 28 + i;
         }
         return null;
       }
 
-      // ── Step 1: Write fixed fields ──────────────────────────────────────
-      const today = new Date();
-      const dd  = String(today.getDate()).padStart(2,'0');
-      const mm  = String(today.getMonth()+1).padStart(2,'0');
-      const yyyy = today.getFullYear();
-      await writeRange('E2', [[dd + '/' + mm + '/' + yyyy]]);
-      await writeRange('E3', [[destName]]);
+      // -- Write header fields --
+      const t = new Date();
+      const dd = String(t.getDate()).padStart(2,'0'), mm = String(t.getMonth()+1).padStart(2,'0'), yyyy = t.getFullYear();
+      await wrt('E2', [[dd + '/' + mm + '/' + yyyy]]);
+      await wrt('E3', [[destName]]);
 
-      // Project description
-      const merged = group.submissions.length > 0 ? group.submissions[0] : {};
-      const opType = (group.operationType || '').toLowerCase();
-      const opWord = opType.includes('load') && opType.includes('discharge') ? 'Loading and discharging'
-                   : opType.includes('discharge') ? 'Discharging'
-                   : opType.includes('load') ? 'Loading'
-                   : 'Loading and discharging';
-      const vesselName = cleanStr(group.vessel);
-      const portName   = group.port.replace(/^[A-Z]{2,4}\s*-\s*/i, '').trim();
-      await writeRange('B21', [[opWord + ' yachts on board the ' + vesselName + ' in ' + portName]]);
+      const op = (group.operationType || '').toLowerCase();
+      const opWord = op.includes('load') && op.includes('discharge') ? 'Loading and discharging'
+                   : op.includes('discharge') ? 'Discharging' : op.includes('load') ? 'Loading' : 'Loading and discharging';
+      const portName = group.port.replace(/^[A-Z]{2,4}\s*-\s*/i,'').trim();
+      await wrt('B21', [[opWord + ' yachts on board the ' + cleanStr(group.vessel) + ' in ' + portName]]);
 
-      // ── Step 2: Parse work hours ─────────────────────────────────────────
-      // Merge all submissions' work hours (use the stored merged data)
-      const mergedData = mergeSubmissions(group);
-      const workDays   = parseWorkHours(mergedData.workHours);
-      const sbDays     = parseDays(mergedData.standbyDays);
-      const trDays     = parseDays(mergedData.travelDays);
-      const logHrs     = parseFloat(mergedData.logisticsHours) || 0;
+      // -- Parse data --
+      const md = mergeSubmissions(group);
+      const wdays = parseWorkHours(md.workHours);
+      const sbDays = parseDays(md.standbyDays);
+      const trDays = parseDays(md.travelDays);
+      const logHrs = parseFloat(md.logisticsHours) || 0;
+      const lmRows = wdays.filter(d => d.lm > 0);
+      const dhRows = wdays.filter(d => d.dh > 0);
+      const crRows = wdays.filter(d => d.crane > 0);
+      const divRows = wdays.filter(d => d.diver > 0);
 
-      // Build LM rows, DH rows, crane rows, diver rows
-      const lmRows    = workDays.filter(d => d.lm > 0);
-      const dhRows    = workDays.filter(d => d.dh > 0);
-      const craneRows = workDays.filter(d => d.crane > 0);
-      const diverRows = workDays.filter(d => d.diver > 0);
-
-      // ── Step 3: Fill each section ─────────────────────────────────────────
-      // We process sections top-to-bottom. After each insert, rows below shift,
-      // so we re-find each label dynamically.
-
-      // -- LOADMASTER --
-      let lmHeader = await findLabelRow('loadmaster');
-      if (lmHeader) {
-        const placeholderRow = lmHeader + 1;
-        if (lmRows.length === 0) {
-          // Just clear the placeholder
-          await writeRange('B' + placeholderRow, [['Date: no work hours recorded']]);
-        } else {
-          // Delete placeholder, insert lmRows.length rows, fill them
-          await deleteRow(placeholderRow);
-          if (lmRows.length > 1) await insertRows(placeholderRow, lmRows.length);
-          for (let i = 0; i < lmRows.length; i++) {
-            const r   = lmRows[i];
-            const desc = 'Date: ' + r.date + ' ' + r.start + ' to ' + r.finish + ' ' + r.hrs + 'h for ' + r.lm + 'LM';
-            await writeRange('B' + (placeholderRow + i) + ':H' + (placeholderRow + i),
-              [[null, desc, null, null, null, r.hrs * r.lm, 100, null]]);
+      // Helper to fill a section
+      async function fillSection(label, rows, rate, roleKey, roleLabel) {
+        const hdr = await findLabel(label);
+        if (!hdr) return;
+        const ph = hdr + 1;
+        await delRow(ph);
+        if (rows.length > 0) {
+          if (rows.length > 1) await insRows(ph, rows.length);
+          for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            const qty = r.hrs * r[roleKey];
+            const desc = 'Date: ' + r.date + ' ' + r.start + ' to ' + r.finish + ' ' + r.hrs + 'h for ' + r[roleKey] + roleLabel;
+            await wrt('B' + (ph+i) + ':H' + (ph+i), [[null, desc, null, null, null, qty, rate, null]]);
           }
         }
       }
 
-      // -- DECKHAND --
-      let dhHeader = await findLabelRow('deckhand');
-      if (dhHeader) {
-        const placeholderRow = dhHeader + 1;
-        if (dhRows.length === 0) {
-          await writeRange('B' + placeholderRow, [['Date: no deckhand hours']]);
-        } else {
-          await deleteRow(placeholderRow);
-          if (dhRows.length > 1) await insertRows(placeholderRow, dhRows.length);
-          for (let i = 0; i < dhRows.length; i++) {
-            const r   = dhRows[i];
-            const desc = 'Date: ' + r.date + ' ' + r.start + ' to ' + r.finish + ' ' + r.hrs + 'h for ' + r.dh + 'DH';
-            await writeRange('B' + (placeholderRow + i) + ':H' + (placeholderRow + i),
-              [[null, desc, null, null, null, r.hrs * r.dh, 80, null]]);
-          }
-        }
+      await fillSection('loadmaster', lmRows, 100, 'lm', 'LM');
+      await fillSection('deckhand', dhRows, 80, 'dh', 'DH');
+      await fillSection('crane', crRows, 75, 'crane', ' crane');
+      await fillSection('diving', divRows, 150, 'diver', ' diver');
+
+      // -- Stand by --
+      const sbHdr = await findLabel('stand by');
+      if (sbHdr && sbDays.length > 0) {
+        const total = sbDays.reduce((a,d) => a + d.people, 0);
+        const dates = sbDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
+        await wrt('B' + (sbHdr+1) + ':H' + (sbHdr+1), [[null, 'Date: ' + dates, null, null, null, total, 200, null]]);
       }
 
-      // -- STAND BY --
-      let sbHeader = await findLabelRow('stand by');
-      if (sbHeader) {
-        const placeholderRow = sbHeader + 1;
-        if (sbDays.length === 0) {
-          await writeRange('B' + placeholderRow, [['Date: none']]);
-        } else {
-          const totalSbDays = sbDays.reduce((a, d) => a + d.people, 0);
-          const datesStr    = sbDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
-          await writeRange('B' + placeholderRow + ':H' + placeholderRow,
-            [[null, 'Date: ' + datesStr, null, null, null, totalSbDays, 200, null]]);
-        }
+      // -- Travel --
+      const trHdr = await findLabel('travel days');
+      if (trHdr && trDays.length > 0) {
+        const total = trDays.reduce((a,d) => a + d.people, 0);
+        const dates = trDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
+        await wrt('B' + (trHdr+1) + ':H' + (trHdr+1), [[null, 'Date: ' + dates, null, null, null, total, 200, null]]);
       }
 
-      // -- TRAVEL --
-      let trHeader = await findLabelRow('travel days');
-      if (trHeader) {
-        const placeholderRow = trHeader + 1;
-        if (trDays.length === 0) {
-          await writeRange('B' + placeholderRow, [['Date: none']]);
-        } else {
-          const totalTrDays = trDays.reduce((a, d) => a + d.people, 0);
-          const datesStr    = trDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
-          await writeRange('B' + placeholderRow + ':H' + placeholderRow,
-            [[null, 'Date: ' + datesStr, null, null, null, totalTrDays, 200, null]]);
-        }
-      }
+      // -- Logistics --
+      const logHdr = await findLabel('logistics');
+      if (logHdr) await wrt('F' + logHdr, [[logHrs]]);
 
-      // -- CRANE --
-      let crHeader = await findLabelRow('crane');
-      if (crHeader) {
-        const placeholderRow = crHeader + 1;
-        if (craneRows.length === 0) {
-          await writeRange('B' + placeholderRow, [['Date: no crane hours']]);
-          await writeRange('F' + placeholderRow, [[0]]);
-        } else {
-          await deleteRow(placeholderRow);
-          if (craneRows.length > 1) await insertRows(placeholderRow, craneRows.length);
-          for (let i = 0; i < craneRows.length; i++) {
-            const r    = craneRows[i];
-            const desc = 'Date: ' + r.date + ' ' + r.start + ' to ' + r.finish + ' ' + r.hrs + 'h for ' + r.crane + ' crane';
-            await writeRange('B' + (placeholderRow + i) + ':H' + (placeholderRow + i),
-              [[null, desc, null, null, null, r.hrs * r.crane, 75, null]]);
-          }
-        }
-      }
-
-      // -- DIVING --
-      let divHeader = await findLabelRow('diving');
-      if (divHeader) {
-        const placeholderRow = divHeader + 1;
-        if (diverRows.length === 0) {
-          await writeRange('B' + placeholderRow, [['Date: no diving hours']]);
-          await writeRange('F' + placeholderRow, [[0]]);
-        } else {
-          await deleteRow(placeholderRow);
-          if (diverRows.length > 1) await insertRows(placeholderRow, diverRows.length);
-          for (let i = 0; i < diverRows.length; i++) {
-            const r    = diverRows[i];
-            const desc = 'Date: ' + r.date + ' ' + r.start + ' to ' + r.finish + ' ' + r.hrs + 'h for ' + r.diver + ' diver';
-            await writeRange('B' + (placeholderRow + i) + ':H' + (placeholderRow + i),
-              [[null, desc, null, null, null, r.hrs * r.diver, 150, null]]);
-          }
-        }
-      }
-
-      // -- LOGISTICS --
-      let logHeader = await findLabelRow('logistics');
-      if (logHeader) {
-        await writeRange('F' + logHeader, [[logHrs]]);
-      }
+      // Close session
+      await fetch(base + '/workbook/closeSession', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'workbook-session-id': sessionId }
+      });
     }
 
     async function pollCopy(url, attempts) {
