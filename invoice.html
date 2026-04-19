@@ -525,7 +525,8 @@
             const r   = rows[i];
             const qty = r.hrs * r[roleKey];
             const desc = 'Date: ' + r.date + ' ' + r.start + ' to ' + r.finish + ' ' + r.hrs + 'h for ' + r[roleKey] + roleLabel;
-            await wrt('B' + (ph + i) + ':H' + (ph + i), [['', desc, '', '', '', qty, rate, '']]);
+            await wrt('B' + (ph + i), [[desc]]);
+            await wrt('F' + (ph + i), [[qty]]);
           }
         }
       }
@@ -538,7 +539,8 @@
       if (sbDays.length > 0) {
         const total = sbDays.reduce((a, d) => a + d.people, 0);
         const dates = sbDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
-        await wrt('B' + sbPh + ':H' + sbPh, [['', 'Date: ' + dates, '', '', '', total, 200, '']]);
+        await wrt('B' + sbPh, [['Date: ' + dates]]);
+        await wrt('F' + sbPh, [[total]]);
       }
 
       // Travel — update single placeholder row
@@ -546,7 +548,8 @@
       if (trDays.length > 0) {
         const total = trDays.reduce((a, d) => a + d.people, 0);
         const dates = trDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
-        await wrt('B' + trPh + ':H' + trPh, [['', 'Date: ' + dates, '', '', '', total, 200, '']]);
+        await wrt('B' + trPh, [['Date: ' + dates]]);
+        await wrt('F' + trPh, [[total]]);
       }
 
       await fillSection(38, crRows,   75, 'crane', ' crane');
