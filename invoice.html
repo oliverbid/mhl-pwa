@@ -409,149 +409,136 @@
 
     async function fillInvoice(fileId, token, group, invNum, destName) {
       const base = 'https://graph.microsoft.com/v1.0/me/drive/items/' + fileId;
-
-      // Create persistent workbook session (required for insert/delete rows)
-      const sessionRes = await fetch(base + '/workbook/createSession', {
+      const sRes = await fetch(base + '/workbook/createSession', {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ persistChanges: true })
       });
-      if (!sessionRes.ok) {
-        const e = await sessionRes.json().catch(() => ({}));
-        throw new Error('Session error: ' + ((e.error && e.error.message) || sessionRes.status));
-      }
-      const sessionId = (await sessionRes.json()).id;
+      if (!sRes.ok) throw new Error('Session failed: ' + sRes.status);
+      const sessionId = (await sRes.json()).id;
       const hdrs = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'workbook-session-id': sessionId };
       const ws = base + '/workbook/worksheets(%27Invoice%27)';
-
-      async function rng(addr) {
-        const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)', { headers: hdrs });
-        if (!r.ok) { console.error('READ ' + addr + ' = ' + r.status); return []; }
-        return (await r.json()).values || [];
-      }
 
       async function wrt(addr, vals) {
         const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)', {
           method: 'PATCH', headers: hdrs, body: JSON.stringify({ values: vals })
         });
-        if (!r.ok) console.error('WRITE ' + addr + ' = ' + r.status);
+        if (!r.ok) { const e = await r.json().catch(()=>{}); console.error('WRITE ' + addr + ' = ' + r.status, JSON.stringify(e).substring(0,100)); }
       }
 
-      async function insRows(rowIdx, count) {
+      async function ins(rowIdx, count) {
         const addr = 'A' + rowIdx + ':H' + (rowIdx + count - 1);
         const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)/insert', {
           method: 'POST', headers: hdrs, body: JSON.stringify({ shift: 'Down' })
         });
-        if (!r.ok) console.error('INSERT at ' + rowIdx + ' = ' + r.status);
+        if (!r.ok) { const e = await r.json().catch(()=>{}); console.error('INSERT ' + rowIdx + ' = ' + r.status, JSON.stringify(e).substring(0,100)); }
       }
 
-      async function delRow(rowIdx) {
+      async function del(rowIdx) {
         const addr = 'A' + rowIdx + ':H' + rowIdx;
         const r = await fetch(ws + '/range(address=%27' + encodeURIComponent(addr) + '%27)/delete', {
           method: 'POST', headers: hdrs, body: JSON.stringify({ shift: 'Up' })
         });
-        if (!r.ok) console.error('DELETE ' + rowIdx + ' = ' + r.status);
+        if (!r.ok) { const e = await r.json().catch(()=>{}); console.error('DELETE ' + rowIdx + ' = ' + r.status, JSON.stringify(e).substring(0,100)); }
       }
 
-      async function findLabel(label) {
-        const vals = await rng('B28:B80');
-        for (let i = 0; i < vals.length; i++) {
-          if (vals[i][0] && vals[i][0].toString().toLowerCase().includes(label.toLowerCase())) return 28 + i;
-        }
-        return null;
-      }
-
-      // -- Write header fields --
+      // Write fixed header fields
       const t = new Date();
       const dd = String(t.getDate()).padStart(2,'0'), mm = String(t.getMonth()+1).padStart(2,'0'), yyyy = t.getFullYear();
-      await wrt('E2', [[dd + '/' + mm + '/' + yyyy]]);
+      await wrt('E2', [[dd+'/'+mm+'/'+yyyy]]);
       await wrt('E3', [[destName]]);
-
-      const op = (group.operationType || '').toLowerCase();
+      const op = (group.operationType||'').toLowerCase();
       const opWord = op.includes('load') && op.includes('discharge') ? 'Loading and discharging'
                    : op.includes('discharge') ? 'Discharging' : op.includes('load') ? 'Loading' : 'Loading and discharging';
       const portName = group.port.replace(/^[A-Z]{2,4}\s*-\s*/i,'').trim();
       await wrt('B21', [[opWord + ' yachts on board the ' + cleanStr(group.vessel) + ' in ' + portName]]);
 
-      // -- Parse data --
-      // Merge all submissions into one combined dataset
+      // Merge submission data
       const md = group.submissions.reduce((acc, sub) => {
         if (!acc.workHours) return {...sub};
-        // Combine workHours - take all lines, deduplicate by date keeping max values
         const hours = {};
-        [...acc.workHours.split('\n'), ...sub.workHours.split('\n')].filter(Boolean).forEach(line => {
+        [...(acc.workHours||'').split('\n'), ...(sub.workHours||'').split('\n')].filter(Boolean).forEach(line => {
           const dm = line.match(/^(\d{4}-\d{2}-\d{2})/);
           if (!dm) return;
           const d = dm[1];
-          const lm = parseInt((line.match(/LM:(\d+)/)||[0,0])[1]);
-          const dh = parseInt((line.match(/DH:(\d+)/)||[0,0])[1]);
-          const cr = parseInt((line.match(/Crane:(\d+)/)||[0,0])[1]);
-          const di = parseInt((line.match(/Diver:(\d+)/)||[0,0])[1]);
           if (!hours[d]) hours[d] = line;
           else {
-            const pl = hours[d];
-            const plm = parseInt((pl.match(/LM:(\d+)/)||[0,0])[1]);
-            if (lm > plm) hours[d] = line;
+            const lmNew = parseInt((line.match(/LM:(\d+)/)||[0,0])[1]);
+            const lmOld = parseInt((hours[d].match(/LM:(\d+)/)||[0,0])[1]);
+            if (lmNew > lmOld) hours[d] = line;
           }
         });
-        return {
-          ...acc,
-          workHours: Object.values(hours).join('\n'),
+        return { ...acc, workHours: Object.values(hours).join('\n'),
           standbyDays: acc.standbyDays || sub.standbyDays,
           travelDays: acc.travelDays || sub.travelDays,
-          logisticsHours: Math.max(parseFloat(acc.logisticsHours)||0, parseFloat(sub.logisticsHours)||0),
-        };
+          logisticsHours: Math.max(parseFloat(acc.logisticsHours)||0, parseFloat(sub.logisticsHours)||0) };
       }, {});
-      const wdays = parseWorkHours(md.workHours);
-      const sbDays = parseDays(md.standbyDays);
-      const trDays = parseDays(md.travelDays);
-      const logHrs = parseFloat(md.logisticsHours) || 0;
-      const lmRows = wdays.filter(d => d.lm > 0);
-      const dhRows = wdays.filter(d => d.dh > 0);
-      const crRows = wdays.filter(d => d.crane > 0);
+
+      const wdays   = parseWorkHours(md.workHours);
+      const sbDays  = parseDays(md.standbyDays);
+      const trDays  = parseDays(md.travelDays);
+      const logHrs  = parseFloat(md.logisticsHours) || 0;
+      const lmRows  = wdays.filter(d => d.lm > 0);
+      const dhRows  = wdays.filter(d => d.dh > 0);
+      const crRows  = wdays.filter(d => d.crane > 0);
       const divRows = wdays.filter(d => d.diver > 0);
 
-      // Helper to fill a section
-      async function fillSection(label, rows, rate, roleKey, roleLabel) {
-        const hdr = await findLabel(label);
-        if (!hdr) return;
-        const ph = hdr + 1;
-        await delRow(ph);
+      // Template fixed row positions (blank template):
+      // R30: Loadmaster header, R31: LM placeholder
+      // R32: Deckhand header,   R33: DH placeholder
+      // R34: Stand By header,   R35: SB placeholder
+      // R36: Travel header,     R37: TR placeholder
+      // R38: Crane header,      R39: Crane placeholder
+      // R40: Diving header,     R41: Diving placeholder
+      // R42: Logistics row
+      // We track an offset as rows are inserted/deleted
+      let offset = 0;
+
+      // Helper: fill a section given its header row
+      async function fillSection(baseHeaderRow, rows, rate, roleKey, roleLabel) {
+        const hdrRow = baseHeaderRow + offset;
+        const phRow  = hdrRow + 1;
+        // Delete placeholder
+        await del(phRow);
+        offset -= 1;
         if (rows.length > 0) {
-          if (rows.length > 1) await insRows(ph, rows.length);
+          // Insert needed rows (already have 0 after delete, need rows.length)
+          await ins(phRow, rows.length);
+          offset += rows.length;
           for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
-            const qty = r.hrs * r[roleKey];
+            const qty  = r.hrs * r[roleKey];
             const desc = 'Date: ' + r.date + ' ' + r.start + ' to ' + r.finish + ' ' + r.hrs + 'h for ' + r[roleKey] + roleLabel;
-            await wrt('B' + (ph+i) + ':H' + (ph+i), [['', desc, '', '', '', qty, rate, '']]);
+            await wrt('B'+(phRow+i)+':H'+(phRow+i), [['', desc, '', '', '', qty, rate, '']]);
           }
         }
       }
 
-      await fillSection('loadmaster', lmRows, 100, 'lm', 'LM');
-      await fillSection('deckhand', dhRows, 80, 'dh', 'DH');
-      await fillSection('crane', crRows, 75, 'crane', ' crane');
-      await fillSection('diving', divRows, 150, 'diver', ' diver');
+      await fillSection(30, lmRows,  100, 'lm',    'LM');
+      await fillSection(32, dhRows,   80, 'dh',    'DH');
 
-      // -- Stand by --
-      const sbHdr = await findLabel('stand by');
-      if (sbHdr && sbDays.length > 0) {
+      // Stand By (combined single row - just update, no insert/delete)
+      const sbHdrRow = 34 + offset;
+      if (sbDays.length > 0) {
         const total = sbDays.reduce((a,d) => a + d.people, 0);
         const dates = sbDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
-        await wrt('B' + (sbHdr+1) + ':H' + (sbHdr+1), [['', 'Date: ' + dates, '', '', '', total, 200, '']]);
+        await wrt('B'+(sbHdrRow+1)+':H'+(sbHdrRow+1), [['', 'Date: ' + dates, '', '', '', total, 200, '']]);
       }
 
-      // -- Travel --
-      const trHdr = await findLabel('travel days');
-      if (trHdr && trDays.length > 0) {
+      // Travel (combined single row)
+      const trHdrRow = 36 + offset;
+      if (trDays.length > 0) {
         const total = trDays.reduce((a,d) => a + d.people, 0);
         const dates = trDays.map(d => d.date + ' (' + d.people + 'p)').join(', ');
-        await wrt('B' + (trHdr+1) + ':H' + (trHdr+1), [['', 'Date: ' + dates, '', '', '', total, 200, '']]);
+        await wrt('B'+(trHdrRow+1)+':H'+(trHdrRow+1), [['', 'Date: ' + dates, '', '', '', total, 200, '']]);
       }
 
-      // -- Logistics --
-      const logHdr = await findLabel('logistics');
-      if (logHdr) await wrt('F' + logHdr, [[logHrs]]);
+      await fillSection(38, crRows,   75, 'crane', ' crane');
+      await fillSection(40, divRows, 150, 'diver', ' diver');
+
+      // Logistics
+      const logRow = 42 + offset;
+      if (logHrs > 0) await wrt('F' + logRow, [[logHrs]]);
 
       // Close session
       await fetch(base + '/workbook/closeSession', {
@@ -559,7 +546,6 @@
         headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'workbook-session-id': sessionId }
       });
     }
-
     async function pollCopy(url, attempts) {
       attempts = attempts || 0;
       if (attempts > 30) throw new Error('Copy timed out');
