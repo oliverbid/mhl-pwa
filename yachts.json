@@ -1,0 +1,50 @@
+[
+  {
+    "id": "7ee4ca872",
+    "name": "Lady Luck",
+    "loa": "42m",
+    "date": "2026-06-01",
+    "time": "08:00",
+    "group": "A",
+    "berth": "Hold 2 Port",
+    "captain": "John Smith",
+    "phone": "+1 555 123 4567",
+    "email": "captain@ladyluck.com",
+    "agent": "Lucky Charters Ltd",
+    "agentPhone": "+44 7700 900123",
+    "status": "scheduled",
+    "notes": "Owner on board"
+  },
+  {
+    "id": "b5bfde8e5",
+    "name": "Sea Breeze III",
+    "loa": "28m",
+    "date": "2026-06-01",
+    "time": "10:30",
+    "group": "A",
+    "berth": "Main Deck Stbd",
+    "captain": "Maria Gonzalez",
+    "phone": "+34 612 345 678",
+    "email": "m.gonzalez@seabreeze.es",
+    "agent": "Brisa del Mar SL",
+    "agentPhone": "+34 91 123 4567",
+    "status": "scheduled",
+    "notes": ""
+  },
+  {
+    "id": "cb69a8771",
+    "name": "Blue Horizon",
+    "loa": "55m",
+    "date": "2026-06-02",
+    "time": "07:00",
+    "group": "B",
+    "berth": "Hold 1 Centre",
+    "captain": "James Robertson",
+    "phone": "+44 7911 123456",
+    "email": "jrob@bluehorizon.co.uk",
+    "agent": "Robertson Family Trust",
+    "agentPhone": "+44 207 123 4567",
+    "status": "scheduled",
+    "notes": "Mast to be stepped after loading"
+  }
+]

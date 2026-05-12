@@ -472,9 +472,38 @@
   let yachts = [];
   let editingId = null;
 
-  function loadData() {
-    try { yachts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch(e) { yachts = []; }
+  async function loadData() {
+    // 1. Load whatever is in localStorage immediately (offline fallback)
+    let local = [];
+    try { local = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch(e) { local = []; }
+
+    // 2. Try to fetch fresh yachts.json from the server
+    try {
+      const resp = await fetch('./yachts.json?_=' + Date.now());
+      if (resp.ok) {
+        const fresh = await resp.json();
+
+        // Merge: fresh data is the base, but local edits (status, notes, berth
+        // changed in the browser) take precedence so user updates are preserved
+        const localMap = Object.fromEntries(local.map(y => [y.id, y]));
+        yachts = fresh.map(y => localMap[y.id] ? { ...y, ...localMap[y.id] } : y);
+
+        // Keep any yachts that were manually added in the browser (not in JSON)
+        const freshIds = new Set(fresh.map(y => y.id));
+        for (const y of local) {
+          if (!freshIds.has(y.id)) yachts.push(y);
+        }
+
+        // Cache merged result so page works offline next time
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
+        return;
+      }
+    } catch(e) {
+      // Network error or yachts.json not yet uploaded — use localStorage
+    }
+
+    yachts = local;
   }
 
   function saveData() {
@@ -515,8 +544,8 @@
     `;
   }
 
-  function render() {
-    loadData();
+  async function render() {
+    await loadData();
     renderSummary();
     const container = document.getElementById('schedule');
 
