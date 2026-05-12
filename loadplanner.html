@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MHL Services — Load Planner</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Load Planner specific styles ── */
+
+    .lp-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 20px 8px;
+      flex-wrap: wrap;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .lp-summary {
+      display: flex;
+      gap: 10px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .summary-chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.83rem;
+      color: var(--muted);
+    }
+
+    .summary-chip strong {
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    .lp-body {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 12px 20px 60px;
+    }
+
+    /* ── Day group ── */
+    .day-group { margin-bottom: 32px; }
+
+    .day-header {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── Yacht card ── */
+    .yacht-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+
+    .yacht-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.11); }
+
+    .yacht-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .yacht-time {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 50px;
+      flex-shrink: 0;
+    }
+
+    .yacht-name {
+      flex: 1;
+      font-weight: 600;
+      font-size: 0.97rem;
+      color: var(--text);
+    }
+
+    .yacht-loa {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .yacht-berth {
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 2px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    /* Status badges */
+    .badge {
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: capitalize;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-scheduled { background: #e8f0fb; color: #185FA5; }
+    .badge-loading   { background: #fff3e0; color: #e65100; }
+    .badge-complete  { background: #e8f5e9; color: #2e7d32; }
+    .badge-cancelled { background: #fce8e6; color: #d93025; }
+    .badge-pending   { background: #f3e8ff; color: #7b1fa2; }
+
+    .chevron {
+      color: var(--muted);
+      font-size: 0.85rem;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .yacht-card.open .chevron { transform: rotate(180deg); }
+
+    /* Expanded detail section */
+    .yacht-details {
+      display: none;
+      padding: 4px 16px 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .yacht-card.open .yacht-details { display: block; }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 10px 20px;
+      padding-top: 14px;
+    }
+
+    .detail-item label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .detail-item span {
+      font-size: 0.88rem;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .notes-row {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .notes-row label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .notes-row p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: var(--text);
+      font-style: italic;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-sm {
+      font-size: 0.82rem;
+      padding: 7px 16px;
+      min-height: 34px;
+    }
+
+    .btn-outline {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-danger {
+      background: #fce8e6;
+      color: var(--danger);
+      border: 1px solid #f5c2be;
+    }
+
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 70px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state svg { opacity: 0.25; margin-bottom: 14px; display: block; margin-left: auto; margin-right: auto; }
+    .empty-state p { margin: 0 0 20px; font-size: 1rem; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10,20,40,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+      width: min(580px, 100%);
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 26px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
+
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 1.4rem;
+      line-height: 1;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .modal-close:hover { background: var(--bg); color: var(--text); }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 16px 0 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-group { display: flex; flex-direction: column; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    .form-group label {
+      font-size: 0.73rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 5px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.91rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(24,95,165,0.12);
+    }
+
+    .form-group textarea { resize: vertical; min-height: 74px; }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 500px) {
+      .form-row { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .yacht-berth, .yacht-loa { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-left">
+    <h1>MHL Services</h1>
+    <span class="subtitle">Load Planner</span>
+  </div>
+</header>
+
+<div class="lp-toolbar">
+  <div class="lp-summary" id="summaryBar"></div>
+  <button class="btn btn-primary" onclick="openModal()">+ Add Yacht</button>
+</div>
+
+<div class="lp-body">
+  <div id="schedule"></div>
+</div>
+
+<!-- ── Add / Edit Modal ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add Yacht</h3>
+      <button class="modal-close" onclick="closeModal()" title="Close">×</button>
+    </div>
+
+    <div class="section-label">Scheduling</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Yacht Name *</label>
+        <input type="text" id="f-name" placeholder="e.g. Lady Luck">
+      </div>
+      <div class="form-group">
+        <label>LOA</label>
+        <input type="text" id="f-loa" placeholder="e.g. 42m">
+      </div>
+      <div class="form-group">
+        <label>Load Date *</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-group">
+        <label>Load Time *</label>
+        <input type="time" id="f-time">
+      </div>
+      <div class="form-group">
+        <label>Group</label>
+        <input type="text" id="f-group" placeholder="e.g. A">
+      </div>
+      <div class="form-group">
+        <label>Berth</label>
+        <input type="text" id="f-berth" placeholder="e.g. Hold 2 Port">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="f-status">
+          <option value="scheduled">Scheduled</option>
+          <option value="pending">Pending</option>
+          <option value="loading">Loading</option>
+          <option value="complete">Complete</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-label">Captain</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Captain Name</label>
+        <input type="text" id="f-captain" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label>Captain Phone</label>
+        <input type="text" id="f-phone" placeholder="+1 555 000 0000">
+      </div>
+      <div class="form-group full">
+        <label>Captain Email</label>
+        <input type="email" id="f-email" placeholder="captain@example.com">
+      </div>
+    </div>
+
+    <div class="section-label">Agent</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Agent / Company</label>
+        <input type="text" id="f-agent" placeholder="Agent name or company">
+      </div>
+      <div class="form-group">
+        <label>Agent Phone</label>
+        <input type="text" id="f-agentPhone" placeholder="+44 7700 000000">
+      </div>
+    </div>
+
+    <div class="section-label">Notes</div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Special instructions, requirements, or notes…"></textarea>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveYacht()">Save Yacht</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'mhl-lp-yachts';
+  let yachts = [];
+  let editingId = null;
+
+  function loadData() {
+    try { yachts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch(e) { yachts = []; }
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
+  }
+
+  function formatDate(d) {
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    });
+  }
+
+  function badgeClass(status) {
+    const map = {
+      scheduled: 'badge-scheduled',
+      loading:   'badge-loading',
+      complete:  'badge-complete',
+      cancelled: 'badge-cancelled',
+      pending:   'badge-pending'
+    };
+    return map[(status || '').toLowerCase()] || 'badge-scheduled';
+  }
+
+  function renderSummary() {
+    const total = yachts.length;
+    const byStatus = yachts.reduce((acc, y) => {
+      const s = y.status || 'scheduled';
+      acc[s] = (acc[s] || 0) + 1;
+      return acc;
+    }, {});
+
+    document.getElementById('summaryBar').innerHTML = `
+      <div class="summary-chip"><strong>${total}</strong> yacht${total !== 1 ? 's' : ''}</div>
+      ${Object.entries(byStatus).map(([s, n]) =>
+        `<div class="summary-chip"><strong>${n}</strong> ${s}</div>`
+      ).join('')}
+    `;
+  }
+
+  function render() {
+    loadData();
+    renderSummary();
+    const container = document.getElementById('schedule');
+
+    if (!yachts.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M3 17l4-8 4 4 4-6 4 10"/>
+            <path d="M3 21h18"/>
+          </svg>
+          <p>No yachts scheduled yet.</p>
+          <button class="btn btn-primary" onclick="openModal()">+ Add First Yacht</button>
+        </div>`;
+      return;
+    }
+
+    // Sort by date then time
+    const sorted = [...yachts].sort((a, b) => {
+      const da = (a.date || '') + 'T' + (a.time || '00:00');
+      const db = (b.date || '') + 'T' + (b.time || '00:00');
+      return da.localeCompare(db);
+    });
+
+    // Group by date
+    const groups = sorted.reduce((acc, y) => {
+      const key = y.date || 'No date';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(y);
+      return acc;
+    }, {});
+
+    container.innerHTML = Object.entries(groups).map(([date, dayYachts]) => `
+      <div class="day-group">
+        <div class="day-header">${date !== 'No date' ? formatDate(date) : 'No date set'}</div>
+        ${dayYachts.map(y => yachtCard(y)).join('')}
+      </div>
+    `).join('');
+  }
+
+  function yachtCard(y) {
+    const sc = badgeClass(y.status);
+    const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return `
+      <div class="yacht-card" id="card-${esc(y.id)}">
+        <div class="yacht-card-header" onclick="toggleCard('${esc(y.id)}')">
+          <span class="yacht-time">${esc(y.time) || '—'}</span>
+          <span class="yacht-name">${esc(y.name)}</span>
+          ${y.loa    ? `<span class="yacht-loa">${esc(y.loa)}</span>` : ''}
+          ${y.group  ? `<span class="group-badge">${esc(y.group)}</span>` : ''}
+          ${y.berth  ? `<span class="yacht-berth">${esc(y.berth)}</span>` : ''}
+          <span class="badge ${sc}">${esc(y.status || 'scheduled')}</span>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="yacht-details">
+          <div class="details-grid">
+            ${di('Captain',     y.captain)}
+            ${di('Phone',       y.phone)}
+            ${di('Email',       y.email)}
+            ${di('Agent',       y.agent)}
+            ${di('Agent Phone', y.agentPhone)}
+            ${di('LOA',         y.loa)}
+            ${di('Berth',       y.berth)}
+            ${di('Group',       y.group)}
+          </div>
+          ${y.notes ? `<div class="notes-row"><label>Notes</label><p>${esc(y.notes)}</p></div>` : ''}
+          <div class="card-actions">
+            <button class="btn btn-outline btn-sm" onclick="openModal('${esc(y.id)}')">✏️ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteYacht('${esc(y.id)}')">Delete</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function di(label, value) {
+    if (!value) return '';
+    const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<div class="detail-item"><label>${label}</label><span>${esc(value)}</span></div>`;
+  }
+
+  function toggleCard(id) {
+    const card = document.getElementById('card-' + id);
+    if (card) card.classList.toggle('open');
+  }
+
+  function openModal(id) {
+    editingId = id || null;
+    const y = id ? (yachts.find(y => y.id === id) || {}) : {};
+    document.getElementById('modalTitle').textContent = id ? 'Edit Yacht' : 'Add Yacht';
+    document.getElementById('f-name').value       = y.name       || '';
+    document.getElementById('f-loa').value        = y.loa        || '';
+    document.getElementById('f-date').value       = y.date       || '';
+    document.getElementById('f-time').value       = y.time       || '';
+    document.getElementById('f-group').value      = y.group      || '';
+    document.getElementById('f-berth').value      = y.berth      || '';
+    document.getElementById('f-captain').value    = y.captain    || '';
+    document.getElementById('f-phone').value      = y.phone      || '';
+    document.getElementById('f-email').value      = y.email      || '';
+    document.getElementById('f-status').value     = y.status     || 'scheduled';
+    document.getElementById('f-agent').value      = y.agent      || '';
+    document.getElementById('f-agentPhone').value = y.agentPhone || '';
+    document.getElementById('f-notes').value      = y.notes      || '';
+    document.getElementById('modalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-name').focus(), 50);
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+    editingId = null;
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  function saveYacht() {
+    const name = document.getElementById('f-name').value.trim();
+    const date = document.getElementById('f-date').value;
+    const time = document.getElementById('f-time').value;
+    if (!name || !date || !time) {
+      alert('Please fill in Yacht Name, Load Date and Load Time.');
+      return;
+    }
+    const data = {
+      name,
+      loa:        document.getElementById('f-loa').value.trim(),
+      date,
+      time,
+      group:      document.getElementById('f-group').value.trim(),
+      berth:      document.getElementById('f-berth').value.trim(),
+      captain:    document.getElementById('f-captain').value.trim(),
+      phone:      document.getElementById('f-phone').value.trim(),
+      email:      document.getElementById('f-email').value.trim(),
+      status:     document.getElementById('f-status').value,
+      agent:      document.getElementById('f-agent').value.trim(),
+      agentPhone: document.getElementById('f-agentPhone').value.trim(),
+      notes:      document.getElementById('f-notes').value.trim(),
+    };
+    if (editingId) {
+      const idx = yachts.findIndex(y => y.id === editingId);
+      if (idx !== -1) yachts[idx] = { ...yachts[idx], ...data };
+    } else {
+      data.id = Math.random().toString(36).substr(2, 9);
+      yachts.push(data);
+    }
+    saveData();
+    closeModal();
+    render();
+  }
+
+  function deleteYacht(id) {
+    const y = yachts.find(y => y.id === id);
+    if (!y) return;
+    if (!confirm(`Delete "${y.name}"? This cannot be undone.`)) return;
+    yachts = yachts.filter(y => y.id !== id);
+    saveData();
+    render();
+  }
+
+  // Boot
+  render();
+</script>
+</body>
+</html>
