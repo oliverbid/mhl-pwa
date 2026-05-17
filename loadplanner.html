@@ -18,6 +18,56 @@
       margin: 0 auto;
     }
 
+    .btn-push {
+      background: #1F4E79;
+      color: #fff;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn-push:hover { background: #163a5a; }
+    .btn-push:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-push.success { background: #2e7d32; }
+    .btn-push.error   { background: #c62828; }
+
+    /* Token modal */
+    .token-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10,20,40,0.55);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .token-modal-overlay.open { display: flex; }
+    .token-modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+      width: min(440px, 100%);
+      padding: 24px;
+    }
+    .token-modal h3 { margin: 0 0 8px; font-size: 1rem; }
+    .token-modal p  { margin: 0 0 14px; font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+    .token-modal input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-family: monospace;
+      box-sizing: border-box;
+      margin-bottom: 14px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .token-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
     .lp-summary {
       display: flex;
       gap: 10px;
@@ -409,7 +459,21 @@
 
 <div class="lp-toolbar">
   <div class="lp-summary" id="summaryBar"></div>
+  <button class="btn btn-push" id="pushBtn" onclick="pushToGitHub()">↑ Push Changes</button>
   <button class="btn btn-primary" onclick="openModal()">+ Add Yacht</button>
+</div>
+
+<!-- Token setup modal -->
+<div class="token-modal-overlay" id="tokenOverlay">
+  <div class="token-modal">
+    <h3>🔑 GitHub Token</h3>
+    <p>Enter your GitHub Personal Access Token to enable pushing changes from this device. It will be saved locally and never leave your browser.</p>
+    <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <div class="token-modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeTokenModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveToken()">Save &amp; Push</button>
+    </div>
+  </div>
 </div>
 
 <div class="lp-body">
@@ -764,6 +828,101 @@
     yachts = yachts.filter(y => y.id !== id);
     saveData();
     render();
+  }
+
+  // ── GitHub push ──────────────────────────────────────────────────────────────
+  const GH_OWNER  = 'oliverbid';
+  const GH_REPO   = 'mhl-pwa';
+  const GH_FILE   = 'yachts.json';
+  const GH_BRANCH = 'main';
+  const TOKEN_KEY = 'mhl-lp-gh-token';
+
+  function closeTokenModal() {
+    document.getElementById('tokenOverlay').classList.remove('open');
+  }
+
+  function saveToken() {
+    const t = document.getElementById('tokenInput').value.trim();
+    if (!t) return;
+    localStorage.setItem(TOKEN_KEY, t);
+    closeTokenModal();
+    doPush(t);
+  }
+
+  async function pushToGitHub() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      document.getElementById('tokenInput').value = '';
+      document.getElementById('tokenOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('tokenInput').focus(), 100);
+      return;
+    }
+    await doPush(token);
+  }
+
+  async function doPush(token) {
+    const btn = document.getElementById('pushBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Pushing…';
+    btn.classList.remove('success', 'error');
+
+    const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
+    const headers = {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      // Get current SHA
+      const getResp = await fetch(`${url}?ref=${GH_BRANCH}`, { headers });
+      if (getResp.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        btn.disabled = false;
+        btn.textContent = '↑ Push Changes';
+        alert('Token rejected — please re-enter it.');
+        pushToGitHub();
+        return;
+      }
+      const fileData = await getResp.json();
+      const sha = fileData.sha;
+
+      // Encode content (UTF-8 safe)
+      const json = JSON.stringify(yachts, null, 2);
+      const encoded = btoa(unescape(encodeURIComponent(json)));
+
+      const putResp = await fetch(url, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          message: 'Update yachts.json from mobile',
+          content: encoded,
+          sha,
+          branch: GH_BRANCH,
+        }),
+      });
+
+      if (putResp.ok) {
+        btn.textContent = '✓ Pushed!';
+        btn.classList.add('success');
+        setTimeout(() => {
+          btn.textContent = '↑ Push Changes';
+          btn.classList.remove('success');
+          btn.disabled = false;
+        }, 3000);
+      } else {
+        throw new Error(`GitHub returned ${putResp.status}`);
+      }
+    } catch (e) {
+      btn.textContent = '✗ Failed';
+      btn.classList.add('error');
+      setTimeout(() => {
+        btn.textContent = '↑ Push Changes';
+        btn.classList.remove('error');
+        btn.disabled = false;
+      }, 3000);
+      console.error('Push error:', e);
+    }
   }
 
   function editTime(event, id) {
