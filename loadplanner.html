@@ -604,24 +604,43 @@
 </div>
 
 <script>
-  const STORAGE_KEY = 'mhl-lp-yachts';
+  const STORAGE_KEY   = 'mhl-lp-yachts';
+  const OVERRIDES_KEY = 'mhl-lp-overrides'; // persists local edits across refreshes
   let yachts = [];
   let editingId = null;
 
+  function getOverrides() {
+    try { return JSON.parse(localStorage.getItem(OVERRIDES_KEY)) || {}; }
+    catch(e) { return {}; }
+  }
+
+  function setOverride(id, fields) {
+    const ov = getOverrides();
+    ov[id] = { ...(ov[id] || {}), ...fields };
+    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(ov));
+  }
+
+  function clearOverrides() {
+    localStorage.removeItem(OVERRIDES_KEY);
+  }
+
+  function applyOverrides(data) {
+    const ov = getOverrides();
+    return data.map(y => ov[y.id] ? { ...y, ...ov[y.id] } : y);
+  }
+
   async function loadData() {
-    // Always try GitHub first — it is the single source of truth.
-    // localStorage is only used as an offline fallback.
+    // Fetch fresh from GitHub, then layer local overrides on top.
+    // Overrides = changes made on this device that haven't been pushed yet.
     try {
       const resp = await fetch('./yachts.json?_=' + Date.now());
       if (resp.ok) {
-        yachts = await resp.json();
+        const fresh = await resp.json();
+        yachts = applyOverrides(fresh);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
         return;
       }
-    } catch(e) {
-      // Network unavailable — fall through to localStorage
-    }
-
+    } catch(e) {}
     // Offline fallback
     try { yachts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
     catch(e) { yachts = []; }
@@ -838,6 +857,8 @@
           data.status = 'new-schedule';
         }
         yachts[idx] = { ...old, ...data };
+        // Save all edited fields as overrides so they survive a refresh
+        setOverride(editingId, data);
       }
     } else {
       data.id = Math.random().toString(36).substr(2, 9);
@@ -970,6 +991,7 @@
       });
 
       if (putResp.ok) {
+        clearOverrides(); // changes are now on GitHub, no longer need local copies
         btn.textContent = '✓ Pushed!';
         btn.classList.add('success');
         setTimeout(() => {
@@ -1019,6 +1041,7 @@
     if (yachts[idx].time !== newTime) {
       yachts[idx].time = newTime;
       yachts[idx].status = 'new-schedule';
+      setOverride(id, { time: newTime, status: 'new-schedule' });
     }
     saveData();
     render();
@@ -1072,6 +1095,7 @@
     const idx = yachts.findIndex(y => y.id === id);
     if (idx === -1) return;
     yachts[idx].status = newStatus;
+    setOverride(id, { status: newStatus });
     saveData();
     render();
   }
