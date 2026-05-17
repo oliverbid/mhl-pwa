@@ -222,13 +222,46 @@
       text-transform: capitalize;
       white-space: nowrap;
       flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
     }
+
+    .badge:hover { opacity: 0.82; }
 
     .badge-updated      { background: #e8f5e9; color: #2e7d32; }
     .badge-new-schedule { background: #fff3e0; color: #e65100; }
     .badge-loaded       { background: #1F4E79; color: #ffffff; }
     .badge-delayed      { background: #fff9c4; color: #f57f17; }
     .badge-cancelled    { background: #fce8e6; color: #d93025; }
+
+    /* Inline status picker */
+    .status-picker {
+      position: fixed;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      z-index: 900;
+      overflow: hidden;
+      min-width: 150px;
+    }
+
+    .status-picker button {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-family: inherit;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .status-picker button:last-child { border-bottom: none; }
+    .status-picker button:hover { background: var(--bg); }
 
     .chevron {
       color: var(--muted);
@@ -708,7 +741,7 @@
           </span>
           ${y.group  ? `<span class="group-badge">${esc(y.group)}</span>` : ''}
           ${y.berth  ? `<span class="yacht-berth">${esc(y.berth)}</span>` : ''}
-          <span class="badge ${sc}">${badgeLabel(y.status)}</span>
+          <span class="badge ${sc}" onclick="editStatus(event,'${esc(y.id)}')" title="Tap to change status">${badgeLabel(y.status)}</span>
           <span class="chevron">▾</span>
         </div>
         <div class="yacht-details">
@@ -797,7 +830,15 @@
     };
     if (editingId) {
       const idx = yachts.findIndex(y => y.id === editingId);
-      if (idx !== -1) yachts[idx] = { ...yachts[idx], ...data };
+      if (idx !== -1) {
+        const old = yachts[idx];
+        const scheduleChanged = ['date','time','group','berth'].some(f => data[f] !== old[f]);
+        const statusExplicitlyChanged = data.status !== old.status;
+        if (scheduleChanged && !statusExplicitlyChanged) {
+          data.status = 'new-schedule';
+        }
+        yachts[idx] = { ...old, ...data };
+      }
     } else {
       data.id = Math.random().toString(36).substr(2, 9);
       yachts.push(data);
@@ -975,7 +1016,62 @@
   function saveTime(id, newTime) {
     const idx = yachts.findIndex(y => y.id === id);
     if (idx === -1) return;
-    yachts[idx].time = newTime;
+    if (yachts[idx].time !== newTime) {
+      yachts[idx].time = newTime;
+      yachts[idx].status = 'new-schedule';
+    }
+    saveData();
+    render();
+  }
+
+  function editStatus(event, id) {
+    event.stopPropagation();
+
+    // Remove any existing picker
+    const old = document.getElementById('status-picker');
+    if (old) { old.remove(); return; }
+
+    const statuses = [
+      { value: 'updated',      label: 'Updated' },
+      { value: 'new-schedule', label: 'New Schedule' },
+      { value: 'loaded',       label: 'Loaded' },
+      { value: 'delayed',      label: 'Delayed' },
+      { value: 'cancelled',    label: 'Cancelled' },
+    ];
+
+    const picker = document.createElement('div');
+    picker.id = 'status-picker';
+    picker.className = 'status-picker';
+
+    statuses.forEach(s => {
+      const btn = document.createElement('button');
+      btn.textContent = s.label;
+      btn.onclick = e => {
+        e.stopPropagation();
+        saveStatus(id, s.value);
+        picker.remove();
+      };
+      picker.appendChild(btn);
+    });
+
+    // Position below the badge
+    const rect = event.target.getBoundingClientRect();
+    const top  = Math.min(rect.bottom + 4, window.innerHeight - 260);
+    const left = Math.min(rect.left, window.innerWidth - 160);
+    picker.style.top  = top  + 'px';
+    picker.style.left = left + 'px';
+    document.body.appendChild(picker);
+
+    // Close on any outside tap
+    setTimeout(() => {
+      document.addEventListener('click', () => { picker.remove(); }, { once: true });
+    }, 0);
+  }
+
+  function saveStatus(id, newStatus) {
+    const idx = yachts.findIndex(y => y.id === id);
+    if (idx === -1) return;
+    yachts[idx].status = newStatus;
     saveData();
     render();
   }
