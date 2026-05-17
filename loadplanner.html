@@ -81,14 +81,6 @@
       user-select: none;
     }
 
-    .yacht-time {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--accent);
-      min-width: 50px;
-      flex-shrink: 0;
-    }
-
     .yacht-name-wrap {
       flex: 1;
       display: flex;
@@ -97,17 +89,18 @@
     }
 
     .yacht-name {
-      font-weight: 600;
-      font-size: 0.97rem;
-      color: var(--text);
+      font-weight: 400;
+      font-size: 0.78rem;
+      color: var(--muted);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .yacht-make {
-      font-size: 0.78rem;
-      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.97rem;
+      color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -116,6 +109,34 @@
     .yacht-loa {
       font-size: 0.82rem;
       color: var(--muted);
+    }
+
+    .yacht-time {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 50px;
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      transition: background 0.15s;
+    }
+
+    .yacht-time:hover { background: rgba(24,95,165,0.1); }
+
+    .yacht-time-input {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      padding: 1px 4px;
+      width: 72px;
+      flex-shrink: 0;
+      background: var(--card);
+      font-family: inherit;
     }
 
     .group-badge {
@@ -153,11 +174,11 @@
       flex-shrink: 0;
     }
 
-    .badge-scheduled { background: #e8f0fb; color: #185FA5; }
-    .badge-loading   { background: #fff3e0; color: #e65100; }
-    .badge-complete  { background: #e8f5e9; color: #2e7d32; }
-    .badge-cancelled { background: #fce8e6; color: #d93025; }
-    .badge-pending   { background: #f3e8ff; color: #7b1fa2; }
+    .badge-updated      { background: #e8f5e9; color: #2e7d32; }
+    .badge-new-schedule { background: #fff3e0; color: #e65100; }
+    .badge-loaded       { background: #1F4E79; color: #ffffff; }
+    .badge-delayed      { background: #fff9c4; color: #f57f17; }
+    .badge-cancelled    { background: #fce8e6; color: #d93025; }
 
     .chevron {
       color: var(--muted);
@@ -432,10 +453,10 @@
       <div class="form-group">
         <label>Status</label>
         <select id="f-status">
-          <option value="scheduled">Scheduled</option>
-          <option value="pending">Pending</option>
-          <option value="loading">Loading</option>
-          <option value="complete">Complete</option>
+          <option value="updated">Updated</option>
+          <option value="new-schedule">New Schedule</option>
+          <option value="loaded">Loaded</option>
+          <option value="delayed">Delayed</option>
           <option value="cancelled">Cancelled</option>
         </select>
       </div>
@@ -536,13 +557,33 @@
 
   function badgeClass(status) {
     const map = {
-      scheduled: 'badge-scheduled',
-      loading:   'badge-loading',
-      complete:  'badge-complete',
-      cancelled: 'badge-cancelled',
-      pending:   'badge-pending'
+      'updated':      'badge-updated',
+      'new-schedule': 'badge-new-schedule',
+      'loaded':       'badge-loaded',
+      'delayed':      'badge-delayed',
+      'cancelled':    'badge-cancelled',
+      // legacy fallbacks
+      'scheduled':    'badge-updated',
+      'complete':     'badge-loaded',
+      'loading':      'badge-new-schedule',
+      'pending':      'badge-delayed',
     };
-    return map[(status || '').toLowerCase()] || 'badge-scheduled';
+    return map[(status || '').toLowerCase()] || 'badge-updated';
+  }
+
+  function badgeLabel(status) {
+    const map = {
+      'updated':      'Updated',
+      'new-schedule': 'New Schedule',
+      'loaded':       'Loaded',
+      'delayed':      'Delayed',
+      'cancelled':    'Cancelled',
+      'scheduled':    'Updated',
+      'complete':     'Loaded',
+      'loading':      'New Schedule',
+      'pending':      'Delayed',
+    };
+    return map[(status || '').toLowerCase()] || 'Updated';
   }
 
   function renderSummary() {
@@ -605,18 +646,19 @@
   function yachtCard(y) {
     const sc = badgeClass(y.status);
     const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const primaryLabel = esc(y.make || y.name);
+    const secondaryLabel = (y.make && y.name && y.make !== y.name) ? esc(y.name) : '';
     return `
       <div class="yacht-card" id="card-${esc(y.id)}">
         <div class="yacht-card-header" onclick="toggleCard('${esc(y.id)}')">
-          <span class="yacht-time">${esc(y.time) || '—'}</span>
+          <span class="yacht-time" id="time-${esc(y.id)}" onclick="editTime(event,'${esc(y.id)}')" title="Tap to edit time">${esc(y.time) || '—'}</span>
           <span class="yacht-name-wrap">
-            <span class="yacht-name">${esc(y.name || y.make)}</span>
-            ${y.make && y.name && y.make !== y.name ? `<span class="yacht-make">${esc(y.make)}</span>` : ''}
+            <span class="yacht-make">${primaryLabel}</span>
+            ${secondaryLabel ? `<span class="yacht-name">${secondaryLabel}</span>` : ''}
           </span>
-          ${y.loa    ? `<span class="yacht-loa">${esc(y.loa)}</span>` : ''}
           ${y.group  ? `<span class="group-badge">${esc(y.group)}</span>` : ''}
           ${y.berth  ? `<span class="yacht-berth">${esc(y.berth)}</span>` : ''}
-          <span class="badge ${sc}">${esc(y.status || 'scheduled')}</span>
+          <span class="badge ${sc}">${badgeLabel(y.status)}</span>
           <span class="chevron">▾</span>
         </div>
         <div class="yacht-details">
@@ -663,7 +705,7 @@
     document.getElementById('f-captain').value    = y.captain    || '';
     document.getElementById('f-phone').value      = y.phone      || '';
     document.getElementById('f-email').value      = y.email      || '';
-    document.getElementById('f-status').value     = y.status     || 'scheduled';
+    document.getElementById('f-status').value     = y.status     || 'updated';
     document.getElementById('f-agent').value      = y.agent      || '';
     document.getElementById('f-agentPhone').value = y.agentPhone || '';
     document.getElementById('f-notes').value      = y.notes      || '';
@@ -720,6 +762,35 @@
     if (!y) return;
     if (!confirm(`Delete "${y.name}"? This cannot be undone.`)) return;
     yachts = yachts.filter(y => y.id !== id);
+    saveData();
+    render();
+  }
+
+  function editTime(event, id) {
+    event.stopPropagation();
+    const span = document.getElementById('time-' + id);
+    if (!span || span.querySelector('input')) return; // already editing
+    const y = yachts.find(y => y.id === id);
+    const current = y ? (y.time || '') : '';
+    const input = document.createElement('input');
+    input.type = 'time';
+    input.value = current;
+    input.className = 'yacht-time-input';
+    input.onclick = e => e.stopPropagation();
+    input.onblur = () => saveTime(id, input.value);
+    input.onkeydown = e => {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') { span.textContent = current || '—'; }
+    };
+    span.textContent = '';
+    span.appendChild(input);
+    setTimeout(() => input.focus(), 10);
+  }
+
+  function saveTime(id, newTime) {
+    const idx = yachts.findIndex(y => y.id === id);
+    if (idx === -1) return;
+    yachts[idx].time = newTime;
     saveData();
     render();
   }
