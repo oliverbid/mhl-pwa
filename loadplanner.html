@@ -575,37 +575,22 @@
   let editingId = null;
 
   async function loadData() {
-    // 1. Load whatever is in localStorage immediately (offline fallback)
-    let local = [];
-    try { local = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch(e) { local = []; }
-
-    // 2. Try to fetch fresh yachts.json from the server
+    // Always try GitHub first — it is the single source of truth.
+    // localStorage is only used as an offline fallback.
     try {
       const resp = await fetch('./yachts.json?_=' + Date.now());
       if (resp.ok) {
-        const fresh = await resp.json();
-
-        // Merge: fresh data is the base, but local edits (status, notes, berth
-        // changed in the browser) take precedence so user updates are preserved
-        const localMap = Object.fromEntries(local.map(y => [y.id, y]));
-        yachts = fresh.map(y => localMap[y.id] ? { ...y, ...localMap[y.id] } : y);
-
-        // Keep any yachts that were manually added in the browser (not in JSON)
-        const freshIds = new Set(fresh.map(y => y.id));
-        for (const y of local) {
-          if (!freshIds.has(y.id)) yachts.push(y);
-        }
-
-        // Cache merged result so page works offline next time
+        yachts = await resp.json();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
         return;
       }
     } catch(e) {
-      // Network error or yachts.json not yet uploaded — use localStorage
+      // Network unavailable — fall through to localStorage
     }
 
-    yachts = local;
+    // Offline fallback
+    try { yachts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch(e) { yachts = []; }
   }
 
   function saveData() {
