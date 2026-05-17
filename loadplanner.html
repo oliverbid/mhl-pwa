@@ -459,6 +459,7 @@
 
 <div class="lp-toolbar">
   <div class="lp-summary" id="summaryBar"></div>
+  <button class="btn btn-outline" id="refreshBtn" onclick="refreshData()" title="Reload latest data from server">⟳ Refresh</button>
   <button class="btn btn-push" id="pushBtn" onclick="pushToGitHub()">↑ Push Changes</button>
   <button class="btn btn-primary" onclick="openModal()">+ Add Yacht</button>
 </div>
@@ -813,6 +814,46 @@
     yachts = yachts.filter(y => y.id !== id);
     saveData();
     render();
+  }
+
+  async function refreshData() {
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    btn.textContent = '⟳ Refreshing…';
+    try {
+      const resp = await fetch('./yachts.json?_=' + Date.now());
+      if (resp.ok) {
+        yachts = await resp.json();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
+        renderSummary();
+        const container = document.getElementById('schedule');
+        // Re-render without re-fetching
+        const sorted = [...yachts].sort((a, b) => {
+          const da = (a.date || '') + 'T' + (a.time || '00:00');
+          const db = (b.date || '') + 'T' + (b.time || '00:00');
+          return da.localeCompare(db);
+        });
+        const groups = sorted.reduce((acc, y) => {
+          const key = y.date || 'No date';
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(y);
+          return acc;
+        }, {});
+        container.innerHTML = Object.entries(groups).map(([date, dayYachts]) => `
+          <div class="day-group">
+            <div class="day-header">${date !== 'No date' ? formatDate(date) : 'No date set'}</div>
+            ${dayYachts.map(y => yachtCard(y)).join('')}
+          </div>
+        `).join('');
+        btn.textContent = '✓ Updated';
+        setTimeout(() => { btn.textContent = '⟳ Refresh'; btn.disabled = false; }, 2000);
+      } else {
+        throw new Error('Server returned ' + resp.status);
+      }
+    } catch(e) {
+      btn.textContent = '✗ Failed';
+      setTimeout(() => { btn.textContent = '⟳ Refresh'; btn.disabled = false; }, 2000);
+    }
   }
 
   // ── GitHub push ──────────────────────────────────────────────────────────────
