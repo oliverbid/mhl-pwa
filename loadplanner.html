@@ -371,14 +371,36 @@
     .port-badge {
       font-size: 0.68rem;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 10px;
       letter-spacing: 0.04em;
-      flex-shrink: 0;
       white-space: nowrap;
+      display: block;
     }
-    .port-badge-load { background: #e3f2fd; color: #1565c0; }
+    .port-badge-load  { background: #e3f2fd; color: #1565c0; }
     .port-badge-disch { background: #fff3e0; color: #e65100; }
+
+    .port-badges-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Team sub-header within a day group */
+    .team-group { margin-bottom: 12px; }
+    .team-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 3px 10px;
+      background: rgba(46,117,182,0.08);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      display: inline-block;
+    }
 
     /* Status badges */
     .badge {
@@ -743,7 +765,7 @@
         <input type="time" id="f-time">
       </div>
       <div class="form-group">
-        <label>Group</label>
+        <label>Team</label>
         <input type="text" id="f-group" placeholder="e.g. 1">
       </div>
       <div class="form-group">
@@ -968,6 +990,21 @@
     return map[(status || '').toLowerCase()] || 'Updated';
   }
 
+  function badgeShortLabel(status) {
+    const map = {
+      'updated':      'Upd',
+      'new-schedule': 'New Sch',
+      'loaded':       'Loaded',
+      'delayed':      'Delay',
+      'cancelled':    'Cancld',
+      'scheduled':    'Upd',
+      'complete':     'Loaded',
+      'loading':      'New Sch',
+      'pending':      'Delay',
+    };
+    return map[(status || '').toLowerCase()] || 'Upd';
+  }
+
   function getActiveVessel() {
     if (!activeVesselId) return null;
     return data.vessels.find(v => v.id === activeVesselId) || null;
@@ -1143,27 +1180,49 @@
   }
 
   function renderAllPorts(yachts, container, isArchived) {
-    // Sort by date then time
+    // Sort by date, then team, then time
     const sorted = [...yachts].sort((a, b) => {
       const da = (a.date || '') + 'T' + (a.time || '00:00');
       const db = (b.date || '') + 'T' + (b.time || '00:00');
-      return da.localeCompare(db);
+      if (da !== db) return da.localeCompare(db);
+      return (a.group || '').localeCompare(b.group || '');
     });
 
     // Group by date
-    const groups = sorted.reduce((acc, y) => {
+    const dateGroups = sorted.reduce((acc, y) => {
       const key = y.date || 'No date';
       if (!acc[key]) acc[key] = [];
       acc[key].push(y);
       return acc;
     }, {});
 
-    container.innerHTML = Object.entries(groups).map(([date, dayYachts]) => `
-      <div class="day-group">
+    container.innerHTML = Object.entries(dateGroups).map(([date, dayYachts]) => {
+      // Sub-group by team within each day
+      const teamMap = dayYachts.reduce((acc, y) => {
+        const key = y.group || '';
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(y);
+        return acc;
+      }, {});
+
+      const teamKeys = Object.keys(teamMap).sort();
+      const multipleTeams = teamKeys.length > 1;
+
+      const teamsHtml = teamKeys.map(teamKey => {
+        const teamHeader = multipleTeams
+          ? `<div class="team-header">Team ${teamKey || 'TBC'}</div>`
+          : '';
+        return `<div class="team-group">
+          ${teamHeader}
+          ${teamMap[teamKey].map(y => yachtCard(y, 'ALL', isArchived)).join('')}
+        </div>`;
+      }).join('');
+
+      return `<div class="day-group">
         <div class="day-header">${date !== 'No date' ? formatDate(date) : 'No date set'}</div>
-        ${dayYachts.map(y => yachtCard(y, 'ALL', isArchived)).join('')}
-      </div>
-    `).join('');
+        ${teamsHtml}
+      </div>`;
+    }).join('');
   }
 
   function renderSinglePort(yachts, container, port, isArchived) {
@@ -1210,11 +1269,13 @@
     const primaryLabel = esc(y.make || y.name || '');
     const secondaryLabel = (y.make && y.name && y.make !== y.name) ? esc(y.name) : '';
 
-    // Port badges shown when viewing ALL
+    // Port badges shown when viewing ALL — stacked vertically
     const showPortBadges = viewMode === 'ALL';
     const portBadges = showPortBadges ? `
-      ${y.loadPort ? `<span class="port-badge port-badge-load">${esc(y.loadPort)}</span>` : ''}
-      ${y.dischPort ? `<span class="port-badge port-badge-disch">${esc(y.dischPort)}</span>` : ''}
+      <div class="port-badges-stack">
+        ${y.loadPort  ? `<span class="port-badge port-badge-load">${esc(y.loadPort)}</span>`  : ''}
+        ${y.dischPort ? `<span class="port-badge port-badge-disch">${esc(y.dischPort)}</span>` : ''}
+      </div>
     ` : '';
 
     const editDeleteButtons = isArchived ? '' : `
@@ -1233,8 +1294,7 @@
             ${secondaryLabel ? `<span class="yacht-name">${secondaryLabel}</span>` : ''}
           </span>
           ${portBadges}
-          ${y.group ? `<span class="group-badge">${esc(y.group)}</span>` : ''}
-          <span class="badge ${sc}" onclick="${isArchived ? '' : `editStatus(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to change status'}">${badgeLabel(y.status)}</span>
+          <span class="badge ${sc}" onclick="${isArchived ? '' : `editStatus(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to change status'}">${badgeShortLabel(y.status)}</span>
           <span class="chevron">&#9662;</span>
         </div>
         <div class="yacht-details">
@@ -1246,7 +1306,7 @@
             ${di('Agent',       y.agent)}
             ${di('Agent Phone', y.agentPhone)}
             ${di('Berth',       y.berth)}
-            ${di('Group',       y.group)}
+            ${di('Team',        y.group)}
           </div>
           ${y.notes ? `<div class="notes-row"><label>Notes</label><p>${esc(y.notes)}</p></div>` : ''}
           ${!isArchived ? `<div class="card-actions">${editDeleteButtons}</div>` : ''}
