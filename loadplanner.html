@@ -1179,45 +1179,38 @@
     }
   }
 
-  function renderAllPorts(yachts, container, isArchived) {
-    // Sort by date, then team, then time
+  // Shared helper: date → team grouping, cards with times (load view)
+  function buildDateTeamGroupsHTML(yachts, isArchived) {
     const sorted = [...yachts].sort((a, b) => {
       const da = (a.date || '') + 'T' + (a.time || '00:00');
       const db = (b.date || '') + 'T' + (b.time || '00:00');
       if (da !== db) return da.localeCompare(db);
       return (a.group || '').localeCompare(b.group || '');
     });
-
-    // Group by date
     const dateGroups = sorted.reduce((acc, y) => {
       const key = y.date || 'No date';
       if (!acc[key]) acc[key] = [];
       acc[key].push(y);
       return acc;
     }, {});
-
-    container.innerHTML = Object.entries(dateGroups).map(([date, dayYachts]) => {
-      // Sub-group by team within each day
+    return Object.entries(dateGroups).map(([date, dayYachts]) => {
       const teamMap = dayYachts.reduce((acc, y) => {
         const key = y.group || '';
         if (!acc[key]) acc[key] = [];
         acc[key].push(y);
         return acc;
       }, {});
-
       const teamKeys = Object.keys(teamMap).sort();
       const multipleTeams = teamKeys.length > 1;
-
       const teamsHtml = teamKeys.map(teamKey => {
         const teamHeader = multipleTeams
           ? `<div class="team-header">Team ${teamKey || 'TBC'}</div>`
           : '';
         return `<div class="team-group">
           ${teamHeader}
-          ${teamMap[teamKey].map(y => yachtCard(y, 'ALL', isArchived)).join('')}
+          ${teamMap[teamKey].map(y => yachtCard(y, 'ALL', isArchived, true)).join('')}
         </div>`;
       }).join('');
-
       return `<div class="day-group">
         <div class="day-header">${date !== 'No date' ? formatDate(date) : 'No date set'}</div>
         ${teamsHtml}
@@ -1225,36 +1218,92 @@
     }).join('');
   }
 
+  // Discharge view: team grouping only, no dates, no times (discharge schedule TBD)
+  function buildTeamGroupsHTML(yachts, isArchived) {
+    const sorted = [...yachts].sort((a, b) =>
+      (a.group || '').localeCompare(b.group || '') ||
+      (a.make || a.name || '').localeCompare(b.make || b.name || '')
+    );
+    const teamMap = sorted.reduce((acc, y) => {
+      const key = y.group || '';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(y);
+      return acc;
+    }, {});
+    const teamKeys = Object.keys(teamMap).sort();
+    const multipleTeams = teamKeys.length > 1;
+    return teamKeys.map(teamKey => {
+      const teamHeader = multipleTeams
+        ? `<div class="team-header">Team ${teamKey || 'TBC'}</div>`
+        : '';
+      return `<div class="team-group">
+        ${teamHeader}
+        ${teamMap[teamKey].map(y => yachtCard(y, 'DISCH', isArchived, false)).join('')}
+      </div>`;
+    }).join('');
+  }
+
+  function renderAllPorts(yachts, container, isArchived) {
+    container.innerHTML = buildDateTeamGroupsHTML(yachts, isArchived);
+  }
+
   function renderSinglePort(yachts, container, port, isArchived) {
-    // Show any yacht where this port is either the load or discharge port,
-    // using the same date → team grouping as the ALL view.
-    const filtered = yachts.filter(y =>
-      (y.loadPort  || '').toUpperCase() === port ||
-      (y.dischPort || '').toUpperCase() === port
+    // Yachts loading at this port → load view (dates + times)
+    // Yachts discharging here (but not loading) → discharge view (no dates/times)
+    const loadYachts  = yachts.filter(y => (y.loadPort  || '').toUpperCase() === port);
+    const dischYachts = yachts.filter(y =>
+      (y.dischPort || '').toUpperCase() === port &&
+      (y.loadPort  || '').toUpperCase() !== port
     );
 
-    if (!filtered.length) {
+    if (!loadYachts.length && !dischYachts.length) {
       container.innerHTML = `<div class="empty-state"><p>No yachts at port ${esc(port)}.</p></div>`;
       return;
     }
 
-    renderAllPorts(filtered, container, isArchived);
+    const showHeaders = loadYachts.length > 0 && dischYachts.length > 0;
+    let html = '';
+
+    if (loadYachts.length) {
+      if (showHeaders) {
+        html += `<div class="port-section-header load-header" style="margin-bottom:12px">
+          <span>LOADING — ${esc(port)}</span>
+          <span style="font-weight:400;opacity:0.7">${loadYachts.length} yacht${loadYachts.length !== 1 ? 's' : ''}</span>
+        </div>`;
+      }
+      html += buildDateTeamGroupsHTML(loadYachts, isArchived);
+    }
+
+    if (dischYachts.length) {
+      if (showHeaders) {
+        html += `<div class="port-section-header discharge-header" style="margin:14px 0 12px">
+          <span>DISCHARGING — ${esc(port)}</span>
+          <span style="font-weight:400;opacity:0.7">${dischYachts.length} yacht${dischYachts.length !== 1 ? 's' : ''}</span>
+        </div>`;
+      }
+      html += buildTeamGroupsHTML(dischYachts, isArchived);
+    }
+
+    container.innerHTML = html;
   }
 
   // ── Yacht card ───────────────────────────────────────────────────────────────
-  function yachtCard(y, viewMode, isArchived) {
+  // showTime=true → load time displayed; false → discharge view (time TBD)
+  function yachtCard(y, viewMode, isArchived, showTime = true) {
     const sc = badgeClass(y.status);
     const primaryLabel = esc(y.make || y.name || '');
     const secondaryLabel = (y.make && y.name && y.make !== y.name) ? esc(y.name) : '';
 
-    // Port badges shown when viewing ALL — stacked vertically
-    const showPortBadges = viewMode === 'ALL';
-    const portBadges = showPortBadges ? `
+    // Port badges always shown — stacked vertically
+    const portBadges = `
       <div class="port-badges-stack">
         ${y.loadPort  ? `<span class="port-badge port-badge-load">${esc(y.loadPort)}</span>`  : ''}
         ${y.dischPort ? `<span class="port-badge port-badge-disch">${esc(y.dischPort)}</span>` : ''}
-      </div>
-    ` : '';
+      </div>`;
+
+    const timeEl = showTime
+      ? `<span class="yacht-time" id="time-${esc(y.id)}" onclick="${isArchived ? '' : `editTime(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to edit time'}">${esc(y.time) || '—'}</span>`
+      : '';
 
     const editDeleteButtons = isArchived ? '' : `
       <button class="btn btn-outline btn-sm" onclick="openModal('${esc(y.id)}')">Edit</button>
@@ -1266,7 +1315,7 @@
     return `
       <div class="yacht-card" id="card-${esc(y.id)}">
         <div class="yacht-card-header" onclick="toggleCard('${esc(y.id)}')">
-          <span class="yacht-time" id="time-${esc(y.id)}" onclick="${isArchived ? '' : `editTime(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to edit time'}">${esc(y.time) || '—'}</span>
+          ${timeEl}
           <span class="yacht-name-wrap">
             <span class="yacht-make">${primaryLabel}</span>
             ${secondaryLabel ? `<span class="yacht-name">${secondaryLabel}</span>` : ''}
