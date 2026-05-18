@@ -1226,41 +1226,19 @@
   }
 
   function renderSinglePort(yachts, container, port, isArchived) {
-    const loadYachts = yachts
-      .filter(y => (y.loadPort || '').toUpperCase() === port)
-      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    // Show any yacht where this port is either the load or discharge port,
+    // using the same date → team grouping as the ALL view.
+    const filtered = yachts.filter(y =>
+      (y.loadPort  || '').toUpperCase() === port ||
+      (y.dischPort || '').toUpperCase() === port
+    );
 
-    const dischYachts = yachts
-      .filter(y => (y.dischPort || '').toUpperCase() === port)
-      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-
-    let html = '';
-
-    if (loadYachts.length) {
-      html += `<div class="port-section">
-        <div class="port-section-header load-header">
-          <span>LOAD — ${esc(port)}</span>
-          <span style="font-weight:400;opacity:0.7">${loadYachts.length} yacht${loadYachts.length !== 1 ? 's' : ''}</span>
-        </div>
-        ${loadYachts.map(y => yachtCard(y, 'LOAD', isArchived)).join('')}
-      </div>`;
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><p>No yachts at port ${esc(port)}.</p></div>`;
+      return;
     }
 
-    if (dischYachts.length) {
-      html += `<div class="port-section">
-        <div class="port-section-header discharge-header">
-          <span>DISCHARGE — ${esc(port)}</span>
-          <span style="font-weight:400;opacity:0.7">${dischYachts.length} yacht${dischYachts.length !== 1 ? 's' : ''}</span>
-        </div>
-        ${dischYachts.map(y => yachtCard(y, 'DISCH', isArchived)).join('')}
-      </div>`;
-    }
-
-    if (!loadYachts.length && !dischYachts.length) {
-      html = `<div class="empty-state"><p>No yachts at port ${esc(port)}.</p></div>`;
-    }
-
-    container.innerHTML = html;
+    renderAllPorts(filtered, container, isArchived);
   }
 
   // ── Yacht card ───────────────────────────────────────────────────────────────
