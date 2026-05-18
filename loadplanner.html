@@ -4,36 +4,520 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MHL Services — Load Planner</title>
-  <link rel="stylesheet" href="style.css">
   <style>
-    /* ── Load Planner specific styles ── */
+    /* ── CSS Variables / Base ── */
+    :root {
+      --bg:      #f0f4f8;
+      --card:    #ffffff;
+      --border:  #dde3ec;
+      --text:    #1a2333;
+      --muted:   #7a8aaa;
+      --accent:  #2E75B6;
+      --dark:    #1F3864;
+      --radius:  12px;
+      --shadow:  0 2px 8px rgba(0,0,0,0.07);
+      --danger:  #c62828;
+    }
 
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      background: var(--dark);
+      color: #fff;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+
+    .header-left { display: flex; align-items: baseline; gap: 12px; }
+    .app-header h1 { margin: 0; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+    .app-header .subtitle {
+      font-size: 0.85rem;
+      opacity: 0.65;
+      font-weight: 400;
+    }
+
+    /* ── Vessel selector bar ── */
+    .vessel-bar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .vessel-bar::-webkit-scrollbar { display: none; }
+
+    .vessel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .vessel-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .vessel-pill.active {
+      background: var(--dark);
+      border-color: var(--dark);
+      color: #fff;
+    }
+    .vessel-pill.archived-pill {
+      opacity: 0.6;
+      font-style: italic;
+    }
+
+    .btn-archive-vessel {
+      font-size: 0.72rem;
+      padding: 3px 9px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .btn-archive-vessel:hover { background: #fce8e6; color: var(--danger); border-color: #f5c2be; }
+
+    .vessel-bar-divider {
+      width: 1px;
+      height: 28px;
+      background: var(--border);
+      flex-shrink: 0;
+      margin: 0 4px;
+    }
+
+    .show-archived-toggle {
+      font-size: 0.78rem;
+      padding: 5px 12px;
+      border-radius: 12px;
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .show-archived-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .show-archived-toggle.active { border-color: var(--accent); color: var(--accent); background: rgba(46,117,182,0.07); }
+
+    /* ── Port filter bar ── */
+    .port-bar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .port-bar::-webkit-scrollbar { display: none; }
+    .port-bar.hidden { display: none; }
+
+    .port-pill {
+      padding: 5px 14px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .port-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .port-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Toolbar ── */
     .lp-toolbar {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 20px 20px 8px;
+      padding: 14px 20px 8px;
       flex-wrap: wrap;
-      max-width: 860px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
-    .btn-push {
-      background: #1F4E79;
-      color: #fff;
-      border: none;
+    .lp-summary {
       display: flex;
+      gap: 10px;
+      flex: 1;
+      flex-wrap: wrap;
+    }
+
+    .summary-chip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.83rem;
+      color: var(--muted);
+    }
+    .summary-chip strong { color: var(--accent); font-size: 1rem; }
+
+    .btn {
+      display: inline-flex;
       align-items: center;
       gap: 6px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.88rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      text-decoration: none;
       white-space: nowrap;
     }
 
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #1a5fa0; }
+
+    .btn-outline {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-push { background: #1F4E79; color: #fff; }
     .btn-push:hover { background: #163a5a; }
     .btn-push:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-push.success { background: #2e7d32; }
     .btn-push.error   { background: #c62828; }
 
-    /* Token modal */
+    .btn-sm { font-size: 0.82rem; padding: 7px 16px; min-height: 34px; }
+
+    .btn-danger {
+      background: #fce8e6;
+      color: var(--danger);
+      border: 1px solid #f5c2be;
+    }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+
+    /* ── Main body ── */
+    .lp-body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 12px 20px 60px;
+    }
+
+    /* ── Section headers (LOAD / DISCHARGE) ── */
+    .port-section { margin-bottom: 28px; }
+
+    .port-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 8px 14px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .port-section-header.load-header {
+      background: #e3f2fd;
+      color: #1565c0;
+      border-left: 4px solid #1565c0;
+    }
+    .port-section-header.discharge-header {
+      background: #fff3e0;
+      color: #e65100;
+      border-left: 4px solid #e65100;
+    }
+
+    /* ── Day group ── */
+    .day-group { margin-bottom: 28px; }
+
+    .day-header {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    /* ── Yacht card ── */
+    .yacht-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .yacht-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.11); }
+
+    .yacht-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .yacht-name-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .yacht-make {
+      font-weight: 700;
+      font-size: 0.97rem;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .yacht-name {
+      font-weight: 400;
+      font-size: 0.78rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .yacht-time {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 50px;
+      flex-shrink: 0;
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      transition: background 0.15s;
+    }
+    .yacht-time:hover { background: rgba(46,117,182,0.1); }
+
+    .yacht-time-input {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      border-radius: 6px;
+      padding: 1px 4px;
+      width: 72px;
+      flex-shrink: 0;
+      background: var(--card);
+      font-family: inherit;
+    }
+
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Port badges in ALL view */
+    .port-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .port-badge-load { background: #e3f2fd; color: #1565c0; }
+    .port-badge-disch { background: #fff3e0; color: #e65100; }
+
+    /* Status badges */
+    .badge {
+      font-size: 0.73rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: capitalize;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      user-select: none;
+    }
+    .badge:hover { opacity: 0.82; }
+
+    .badge-updated      { background: #e8f5e9; color: #2e7d32; }
+    .badge-new-schedule { background: #fff3e0; color: #e65100; }
+    .badge-loaded       { background: #1F4E79; color: #ffffff; }
+    .badge-delayed      { background: #fff9c4; color: #f57f17; }
+    .badge-cancelled    { background: #fce8e6; color: #d93025; }
+
+    /* Inline status picker */
+    .status-picker {
+      position: fixed;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+      z-index: 900;
+      overflow: hidden;
+      min-width: 150px;
+    }
+    .status-picker button {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-family: inherit;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+    .status-picker button:last-child { border-bottom: none; }
+    .status-picker button:hover { background: var(--bg); }
+
+    .chevron {
+      color: var(--muted);
+      font-size: 0.85rem;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .yacht-card.open .chevron { transform: rotate(180deg); }
+
+    /* Expanded detail section */
+    .yacht-details {
+      display: none;
+      padding: 4px 16px 16px;
+      border-top: 1px solid var(--border);
+    }
+    .yacht-card.open .yacht-details { display: block; }
+
+    .captain-highlight {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+    .captain-highlight.load-captain { background: #e3f2fd; border-left: 3px solid #1565c0; }
+    .captain-highlight.disch-captain { background: #fff3e0; border-left: 3px solid #e65100; }
+
+    .captain-highlight .cap-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .captain-highlight .cap-name { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .captain-highlight .cap-phone { font-size: 0.85rem; color: var(--accent); }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 10px 20px;
+      padding-top: 14px;
+    }
+
+    .detail-item label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .detail-item span { font-size: 0.88rem; color: var(--text); word-break: break-word; }
+
+    .notes-row {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .notes-row label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .notes-row p { margin: 0; font-size: 0.88rem; color: var(--text); font-style: italic; }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 70px 20px;
+      color: var(--muted);
+    }
+    .empty-state svg { opacity: 0.25; margin-bottom: 14px; display: block; margin-left: auto; margin-right: auto; }
+    .empty-state p { margin: 0 0 20px; font-size: 1rem; }
+
+    /* ── Token modal ── */
     .token-modal-overlay {
       display: none;
       position: fixed;
@@ -68,306 +552,7 @@
     }
     .token-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-    .lp-summary {
-      display: flex;
-      gap: 10px;
-      flex: 1;
-      flex-wrap: wrap;
-    }
-
-    .summary-chip {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 0.83rem;
-      color: var(--muted);
-    }
-
-    .summary-chip strong {
-      color: var(--accent);
-      font-size: 1rem;
-    }
-
-    .lp-body {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 12px 20px 60px;
-    }
-
-    /* ── Day group ── */
-    .day-group { margin-bottom: 32px; }
-
-    .day-header {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      padding-bottom: 8px;
-      margin-bottom: 10px;
-      border-bottom: 2px solid var(--border);
-    }
-
-    /* ── Yacht card ── */
-    .yacht-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 10px;
-      overflow: hidden;
-      transition: box-shadow 0.15s;
-    }
-
-    .yacht-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.11); }
-
-    .yacht-card-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 13px 16px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .yacht-name-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .yacht-name {
-      font-weight: 400;
-      font-size: 0.78rem;
-      color: var(--muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .yacht-make {
-      font-weight: 700;
-      font-size: 0.97rem;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .yacht-loa {
-      font-size: 0.82rem;
-      color: var(--muted);
-    }
-
-    .yacht-time {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--accent);
-      min-width: 50px;
-      flex-shrink: 0;
-      cursor: pointer;
-      border-radius: 6px;
-      padding: 2px 4px;
-      margin: -2px -4px;
-      transition: background 0.15s;
-    }
-
-    .yacht-time:hover { background: rgba(24,95,165,0.1); }
-
-    .yacht-time-input {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--accent);
-      border: 2px solid var(--accent);
-      border-radius: 6px;
-      padding: 1px 4px;
-      width: 72px;
-      flex-shrink: 0;
-      background: var(--card);
-      font-family: inherit;
-    }
-
-    .group-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-size: 0.7rem;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .yacht-berth {
-      font-size: 0.8rem;
-      color: var(--muted);
-      background: var(--bg);
-      padding: 2px 9px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
-    /* Status badges */
-    .badge {
-      font-size: 0.73rem;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 20px;
-      text-transform: capitalize;
-      white-space: nowrap;
-      flex-shrink: 0;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .badge:hover { opacity: 0.82; }
-
-    .badge-updated      { background: #e8f5e9; color: #2e7d32; }
-    .badge-new-schedule { background: #fff3e0; color: #e65100; }
-    .badge-loaded       { background: #1F4E79; color: #ffffff; }
-    .badge-delayed      { background: #fff9c4; color: #f57f17; }
-    .badge-cancelled    { background: #fce8e6; color: #d93025; }
-
-    /* Inline status picker */
-    .status-picker {
-      position: fixed;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.18);
-      z-index: 900;
-      overflow: hidden;
-      min-width: 150px;
-    }
-
-    .status-picker button {
-      display: block;
-      width: 100%;
-      padding: 11px 16px;
-      border: none;
-      background: none;
-      text-align: left;
-      cursor: pointer;
-      font-size: 0.88rem;
-      font-family: inherit;
-      color: var(--text);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .status-picker button:last-child { border-bottom: none; }
-    .status-picker button:hover { background: var(--bg); }
-
-    .chevron {
-      color: var(--muted);
-      font-size: 0.85rem;
-      transition: transform 0.2s;
-      flex-shrink: 0;
-    }
-
-    .yacht-card.open .chevron { transform: rotate(180deg); }
-
-    /* Expanded detail section */
-    .yacht-details {
-      display: none;
-      padding: 4px 16px 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    .yacht-card.open .yacht-details { display: block; }
-
-    .details-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: 10px 20px;
-      padding-top: 14px;
-    }
-
-    .detail-item label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    .detail-item span {
-      font-size: 0.88rem;
-      color: var(--text);
-      word-break: break-word;
-    }
-
-    .notes-row {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    .notes-row label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .notes-row p {
-      margin: 0;
-      font-size: 0.88rem;
-      color: var(--text);
-      font-style: italic;
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    .btn-sm {
-      font-size: 0.82rem;
-      padding: 7px 16px;
-      min-height: 34px;
-    }
-
-    .btn-outline {
-      background: var(--bg);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
-
-    .btn-danger {
-      background: #fce8e6;
-      color: var(--danger);
-      border: 1px solid #f5c2be;
-    }
-
-    .btn-danger:hover { background: var(--danger); color: #fff; }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 70px 20px;
-      color: var(--muted);
-    }
-
-    .empty-state svg { opacity: 0.25; margin-bottom: 14px; display: block; margin-left: auto; margin-right: auto; }
-    .empty-state p { margin: 0 0 20px; font-size: 1rem; }
-
-    /* ── Modal ── */
+    /* ── Add/Edit Modal ── */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -378,14 +563,13 @@
       justify-content: center;
       padding: 16px;
     }
-
     .modal-overlay.open { display: flex; }
 
     .modal {
       background: var(--card);
       border-radius: var(--radius);
       box-shadow: 0 12px 40px rgba(0,0,0,0.22);
-      width: min(580px, 100%);
+      width: min(620px, 100%);
       max-height: 92vh;
       overflow-y: auto;
       padding: 26px;
@@ -397,7 +581,6 @@
       justify-content: space-between;
       margin-bottom: 20px;
     }
-
     .modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
 
     .modal-close {
@@ -410,7 +593,6 @@
       padding: 4px 8px;
       border-radius: 6px;
     }
-
     .modal-close:hover { background: var(--bg); color: var(--text); }
 
     .section-label {
@@ -454,15 +636,13 @@
       background: var(--bg);
       transition: border-color 0.15s, box-shadow 0.15s;
     }
-
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(24,95,165,0.12);
+      box-shadow: 0 0 0 3px rgba(46,117,182,0.12);
     }
-
     .form-group textarea { resize: vertical; min-height: 74px; }
 
     .modal-actions {
@@ -477,7 +657,6 @@
     @media (max-width: 500px) {
       .form-row { grid-template-columns: 1fr; }
       .form-group.full { grid-column: 1; }
-      .yacht-berth, .yacht-loa { display: none; }
     }
   </style>
 </head>
@@ -490,17 +669,24 @@
   </div>
 </header>
 
+<!-- Vessel selector bar -->
+<div class="vessel-bar" id="vesselBar"></div>
+
+<!-- Port filter bar -->
+<div class="port-bar hidden" id="portBar"></div>
+
+<!-- Toolbar -->
 <div class="lp-toolbar">
   <div class="lp-summary" id="summaryBar"></div>
-  <button class="btn btn-outline" id="refreshBtn" onclick="refreshData()" title="Reload latest data from server">⟳ Refresh</button>
-  <button class="btn btn-push" id="pushBtn" onclick="pushToGitHub()">↑ Push Changes</button>
-  <button class="btn btn-primary" onclick="openModal()">+ Add Yacht</button>
+  <button class="btn btn-outline btn-sm" id="refreshBtn" onclick="refreshData()" title="Reload latest data from server">&#x27F3; Refresh</button>
+  <button class="btn btn-push btn-sm" id="pushBtn" onclick="pushToGitHub()">&#x2191; Push Changes</button>
+  <button class="btn btn-primary btn-sm" onclick="openModal()">+ Add Yacht</button>
 </div>
 
 <!-- Token setup modal -->
 <div class="token-modal-overlay" id="tokenOverlay">
   <div class="token-modal">
-    <h3>🔑 GitHub Token</h3>
+    <h3>GitHub Token</h3>
     <p>Enter your GitHub Personal Access Token to enable pushing changes from this device. It will be saved locally and never leave your browser.</p>
     <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
     <div class="token-modal-actions">
@@ -514,35 +700,51 @@
   <div id="schedule"></div>
 </div>
 
-<!-- ── Add / Edit Modal ── -->
+<!-- Add / Edit Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
   <div class="modal">
     <div class="modal-header">
       <h3 id="modalTitle">Add Yacht</h3>
-      <button class="modal-close" onclick="closeModal()" title="Close">×</button>
+      <button class="modal-close" onclick="closeModal()" title="Close">&times;</button>
+    </div>
+
+    <div class="section-label">Vessel</div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>Vessel *</label>
+        <select id="f-vessel"></select>
+      </div>
     </div>
 
     <div class="section-label">Scheduling</div>
     <div class="form-row">
       <div class="form-group">
+        <label>Make / Type *</label>
+        <input type="text" id="f-make" placeholder="e.g. 72' PRINCESS">
+      </div>
+      <div class="form-group">
         <label>Yacht Name *</label>
-        <input type="text" id="f-name" placeholder="e.g. Lady Luck">
+        <input type="text" id="f-name" placeholder="e.g. VENTURE II">
       </div>
       <div class="form-group">
-        <label>LOA</label>
-        <input type="text" id="f-loa" placeholder="e.g. 42m">
+        <label>Load Port *</label>
+        <input type="text" id="f-loadPort" placeholder="e.g. PEV">
       </div>
       <div class="form-group">
-        <label>Load Date *</label>
+        <label>Discharge Port *</label>
+        <input type="text" id="f-dischPort" placeholder="e.g. SAR">
+      </div>
+      <div class="form-group">
+        <label>Date *</label>
         <input type="date" id="f-date">
       </div>
       <div class="form-group">
-        <label>Load Time *</label>
+        <label>Time *</label>
         <input type="time" id="f-time">
       </div>
       <div class="form-group">
         <label>Group</label>
-        <input type="text" id="f-group" placeholder="e.g. A">
+        <input type="text" id="f-group" placeholder="e.g. 1">
       </div>
       <div class="form-group">
         <label>Berth</label>
@@ -560,7 +762,7 @@
       </div>
     </div>
 
-    <div class="section-label">Captain</div>
+    <div class="section-label">Load Captain</div>
     <div class="form-row">
       <div class="form-group">
         <label>Captain Name</label>
@@ -573,6 +775,18 @@
       <div class="form-group full">
         <label>Captain Email</label>
         <input type="email" id="f-email" placeholder="captain@example.com">
+      </div>
+    </div>
+
+    <div class="section-label">Discharge Captain</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Discharge Captain Name</label>
+        <input type="text" id="f-dischCaptain" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label>Discharge Captain Phone</label>
+        <input type="text" id="f-dischPhone" placeholder="+1 555 000 0000">
       </div>
     </div>
 
@@ -592,7 +806,7 @@
     <div class="form-row">
       <div class="form-group full">
         <label>Notes</label>
-        <textarea id="f-notes" placeholder="Special instructions, requirements, or notes…"></textarea>
+        <textarea id="f-notes" placeholder="Special instructions, requirements, or notes..."></textarea>
       </div>
     </div>
 
@@ -604,11 +818,26 @@
 </div>
 
 <script>
+  // ── Constants ────────────────────────────────────────────────────────────────
   const STORAGE_KEY   = 'mhl-lp-yachts';
-  const OVERRIDES_KEY = 'mhl-lp-overrides'; // persists local edits across refreshes
-  let yachts = [];
-  let editingId = null;
+  const OVERRIDES_KEY = 'mhl-lp-overrides';
+  const ARCHIVED_KEY  = 'mhl-lp-archived';
+  const TOKEN_KEY     = 'mhl-lp-gh-token';
 
+  const GH_OWNER  = 'oliverbid';
+  const GH_REPO   = 'mhl-pwa';
+  const GH_FILE   = 'yachts.json';
+  const GH_BRANCH = 'main';
+
+  // ── Global state ─────────────────────────────────────────────────────────────
+  let data = { vessels: [] };  // full {vessels:[...]} object
+  let activeVesselId = null;
+  let activePort = 'ALL';
+  let showArchived = false;
+  let editingId = null;
+  let editingVesselId = null; // vessel the yacht being edited belongs to
+
+  // ── Overrides (local edits that haven't been pushed) ─────────────────────────
   function getOverrides() {
     try { return JSON.parse(localStorage.getItem(OVERRIDES_KEY)) || {}; }
     catch(e) { return {}; }
@@ -624,31 +853,83 @@
     localStorage.removeItem(OVERRIDES_KEY);
   }
 
-  function applyOverrides(data) {
-    const ov = getOverrides();
-    return data.map(y => ov[y.id] ? { ...y, ...ov[y.id] } : y);
+  function getArchivedIds() {
+    try { return JSON.parse(localStorage.getItem(ARCHIVED_KEY)) || []; }
+    catch(e) { return []; }
   }
 
+  function addArchivedId(vesselId) {
+    const ids = getArchivedIds();
+    if (!ids.includes(vesselId)) ids.push(vesselId);
+    localStorage.setItem(ARCHIVED_KEY, JSON.stringify(ids));
+  }
+
+  // Apply per-yacht overrides to a vessel's yachts array
+  function applyOverrides(yachts) {
+    const ov = getOverrides();
+    return yachts.map(y => ov[y.id] ? { ...y, ...ov[y.id] } : y);
+  }
+
+  // Apply archived-vessel overrides to vessel list
+  function applyArchivedOverrides(vessels) {
+    const archivedIds = getArchivedIds();
+    return vessels.map(v => archivedIds.includes(v.id) ? { ...v, archived: true } : v);
+  }
+
+  // ── Data loading ─────────────────────────────────────────────────────────────
   async function loadData() {
-    // Fetch fresh from GitHub, then layer local overrides on top.
-    // Overrides = changes made on this device that haven't been pushed yet.
     try {
       const resp = await fetch('./yachts.json?_=' + Date.now());
       if (resp.ok) {
         const fresh = await resp.json();
-        yachts = applyOverrides(fresh);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
+        // Handle both old flat array format and new {vessels:[...]} format
+        let parsed;
+        if (Array.isArray(fresh)) {
+          // Legacy format: wrap in a default vessel
+          parsed = {
+            vessels: [{
+              id: 'default',
+              name: 'Vessel',
+              archived: false,
+              yachts: fresh
+            }]
+          };
+        } else {
+          parsed = fresh;
+        }
+
+        // Apply overrides
+        parsed.vessels = applyArchivedOverrides(parsed.vessels).map(v => ({
+          ...v,
+          yachts: applyOverrides(v.yachts || [])
+        }));
+
+        data = parsed;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         return;
       }
     } catch(e) {}
     // Offline fallback
-    try { yachts = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-    catch(e) { yachts = []; }
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (stored) {
+        if (Array.isArray(stored)) {
+          data = { vessels: [{ id: 'default', name: 'Vessel', archived: false, yachts: stored }] };
+        } else {
+          data = stored;
+        }
+      } else {
+        data = { vessels: [] };
+      }
+    } catch(e) { data = { vessels: [] }; }
   }
 
   function saveData() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
   function formatDate(d) {
     const dt = new Date(d + 'T00:00:00');
@@ -664,7 +945,6 @@
       'loaded':       'badge-loaded',
       'delayed':      'badge-delayed',
       'cancelled':    'badge-cancelled',
-      // legacy fallbacks
       'scheduled':    'badge-updated',
       'complete':     'badge-loaded',
       'loading':      'badge-new-schedule',
@@ -688,10 +968,131 @@
     return map[(status || '').toLowerCase()] || 'Updated';
   }
 
+  function getActiveVessel() {
+    if (!activeVesselId) return null;
+    return data.vessels.find(v => v.id === activeVesselId) || null;
+  }
+
+  function getActiveYachts() {
+    const v = getActiveVessel();
+    return v ? (v.yachts || []) : [];
+  }
+
+  function allYachtsFlat() {
+    return data.vessels.flatMap(v => v.yachts || []);
+  }
+
+  // Find which vessel owns a given yacht id
+  function findVesselForYacht(yachtId) {
+    return data.vessels.find(v => (v.yachts || []).some(y => y.id === yachtId)) || null;
+  }
+
+  function findYachtById(yachtId) {
+    for (const v of data.vessels) {
+      const y = (v.yachts || []).find(y => y.id === yachtId);
+      if (y) return y;
+    }
+    return null;
+  }
+
+  // ── Vessel bar ───────────────────────────────────────────────────────────────
+  function renderVesselBar() {
+    const bar = document.getElementById('vesselBar');
+    const vessels = data.vessels || [];
+    const visibleVessels = showArchived ? vessels : vessels.filter(v => !v.archived);
+    const hasArchived = vessels.some(v => v.archived);
+
+    let html = '';
+    visibleVessels.forEach(v => {
+      const isActive = v.id === activeVesselId;
+      const isArchived = v.archived;
+      html += `
+        <button class="vessel-pill${isActive ? ' active' : ''}${isArchived ? ' archived-pill' : ''}"
+                onclick="selectVessel('${esc(v.id)}')">
+          ${esc(v.name)}
+          ${isActive && !isArchived ? `<span class="btn-archive-vessel" onclick="archiveVessel(event,'${esc(v.id)}')">Archive</span>` : ''}
+        </button>`;
+    });
+
+    if (hasArchived || showArchived) {
+      if (visibleVessels.length) html += `<div class="vessel-bar-divider"></div>`;
+      html += `<button class="show-archived-toggle${showArchived ? ' active' : ''}" onclick="toggleShowArchived()">
+        ${showArchived ? 'Hide archived' : 'Show archived'}
+      </button>`;
+    }
+
+    bar.innerHTML = html;
+  }
+
+  function selectVessel(id) {
+    activeVesselId = id;
+    activePort = 'ALL';
+    renderVesselBar();
+    renderPortBar();
+    renderMain();
+  }
+
+  function toggleShowArchived() {
+    showArchived = !showArchived;
+    renderVesselBar();
+  }
+
+  function archiveVessel(event, vesselId) {
+    event.stopPropagation();
+    const v = data.vessels.find(v => v.id === vesselId);
+    if (!v) return;
+    if (!confirm(`Archive vessel "${v.name}"? It will be hidden from the main list but all data is kept.`)) return;
+    v.archived = true;
+    addArchivedId(vesselId);
+    saveData();
+    // If we just archived the active vessel, switch to first non-archived
+    if (activeVesselId === vesselId) {
+      const next = data.vessels.find(v => !v.archived);
+      activeVesselId = next ? next.id : null;
+      activePort = 'ALL';
+    }
+    renderVesselBar();
+    renderPortBar();
+    renderMain();
+  }
+
+  // ── Port bar ─────────────────────────────────────────────────────────────────
+  function renderPortBar() {
+    const bar = document.getElementById('portBar');
+    if (!activeVesselId) {
+      bar.classList.add('hidden');
+      return;
+    }
+    const yachts = getActiveYachts();
+    // Collect unique ports
+    const portsSet = new Set();
+    yachts.forEach(y => {
+      if (y.loadPort) portsSet.add(y.loadPort.toUpperCase());
+      if (y.dischPort) portsSet.add(y.dischPort.toUpperCase());
+    });
+    const ports = Array.from(portsSet).sort();
+
+    let html = `<button class="port-pill${activePort === 'ALL' ? ' active' : ''}" onclick="selectPort('ALL')">ALL</button>`;
+    ports.forEach(p => {
+      html += `<button class="port-pill${activePort === p ? ' active' : ''}" onclick="selectPort('${esc(p)}')">${esc(p)}</button>`;
+    });
+
+    bar.innerHTML = html;
+    bar.classList.remove('hidden');
+  }
+
+  function selectPort(port) {
+    activePort = port;
+    renderPortBar();
+    renderMain();
+  }
+
+  // ── Summary bar ──────────────────────────────────────────────────────────────
   function renderSummary() {
+    const yachts = getActiveYachts();
     const total = yachts.length;
     const byStatus = yachts.reduce((acc, y) => {
-      const s = y.status || 'scheduled';
+      const s = y.status || 'updated';
       acc[s] = (acc[s] || 0) + 1;
       return acc;
     }, {});
@@ -699,29 +1100,49 @@
     document.getElementById('summaryBar').innerHTML = `
       <div class="summary-chip"><strong>${total}</strong> yacht${total !== 1 ? 's' : ''}</div>
       ${Object.entries(byStatus).map(([s, n]) =>
-        `<div class="summary-chip"><strong>${n}</strong> ${s}</div>`
+        `<div class="summary-chip"><strong>${n}</strong> ${badgeLabel(s)}</div>`
       ).join('')}
     `;
   }
 
-  async function render() {
-    await loadData();
+  // ── Main content ─────────────────────────────────────────────────────────────
+  function renderMain() {
     renderSummary();
     const container = document.getElementById('schedule');
 
-    if (!yachts.length) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-            <path d="M3 17l4-8 4 4 4-6 4 10"/>
-            <path d="M3 21h18"/>
-          </svg>
-          <p>No yachts scheduled yet.</p>
-          <button class="btn btn-primary" onclick="openModal()">+ Add First Yacht</button>
-        </div>`;
+    if (!activeVesselId) {
+      container.innerHTML = `<div class="empty-state">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6M12 9v6"/>
+        </svg>
+        <p>No vessel selected.</p>
+      </div>`;
       return;
     }
 
+    const vessel = getActiveVessel();
+    const yachts = getActiveYachts();
+    const isArchived = vessel && vessel.archived;
+
+    if (!yachts.length) {
+      container.innerHTML = `<div class="empty-state">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M3 17l4-8 4 4 4-6 4 10"/><path d="M3 21h18"/>
+        </svg>
+        <p>No yachts scheduled for this vessel.</p>
+        ${!isArchived ? `<button class="btn btn-primary" onclick="openModal()">+ Add First Yacht</button>` : ''}
+      </div>`;
+      return;
+    }
+
+    if (activePort === 'ALL') {
+      renderAllPorts(yachts, container, isArchived);
+    } else {
+      renderSinglePort(yachts, container, activePort, isArchived);
+    }
+  }
+
+  function renderAllPorts(yachts, container, isArchived) {
     // Sort by date then time
     const sorted = [...yachts].sort((a, b) => {
       const da = (a.date || '') + 'T' + (a.time || '00:00');
@@ -740,52 +1161,124 @@
     container.innerHTML = Object.entries(groups).map(([date, dayYachts]) => `
       <div class="day-group">
         <div class="day-header">${date !== 'No date' ? formatDate(date) : 'No date set'}</div>
-        ${dayYachts.map(y => yachtCard(y)).join('')}
+        ${dayYachts.map(y => yachtCard(y, 'ALL', isArchived)).join('')}
       </div>
     `).join('');
   }
 
-  function yachtCard(y) {
+  function renderSinglePort(yachts, container, port, isArchived) {
+    const loadYachts = yachts
+      .filter(y => (y.loadPort || '').toUpperCase() === port)
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+    const dischYachts = yachts
+      .filter(y => (y.dischPort || '').toUpperCase() === port)
+      .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+    let html = '';
+
+    if (loadYachts.length) {
+      html += `<div class="port-section">
+        <div class="port-section-header load-header">
+          <span>LOAD — ${esc(port)}</span>
+          <span style="font-weight:400;opacity:0.7">${loadYachts.length} yacht${loadYachts.length !== 1 ? 's' : ''}</span>
+        </div>
+        ${loadYachts.map(y => yachtCard(y, 'LOAD', isArchived)).join('')}
+      </div>`;
+    }
+
+    if (dischYachts.length) {
+      html += `<div class="port-section">
+        <div class="port-section-header discharge-header">
+          <span>DISCHARGE — ${esc(port)}</span>
+          <span style="font-weight:400;opacity:0.7">${dischYachts.length} yacht${dischYachts.length !== 1 ? 's' : ''}</span>
+        </div>
+        ${dischYachts.map(y => yachtCard(y, 'DISCH', isArchived)).join('')}
+      </div>`;
+    }
+
+    if (!loadYachts.length && !dischYachts.length) {
+      html = `<div class="empty-state"><p>No yachts at port ${esc(port)}.</p></div>`;
+    }
+
+    container.innerHTML = html;
+  }
+
+  // ── Yacht card ───────────────────────────────────────────────────────────────
+  function yachtCard(y, viewMode, isArchived) {
     const sc = badgeClass(y.status);
-    const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    const primaryLabel = esc(y.make || y.name);
+    const primaryLabel = esc(y.make || y.name || '');
     const secondaryLabel = (y.make && y.name && y.make !== y.name) ? esc(y.name) : '';
+
+    // Port badges shown when viewing ALL
+    const showPortBadges = viewMode === 'ALL';
+    const portBadges = showPortBadges ? `
+      ${y.loadPort ? `<span class="port-badge port-badge-load">${esc(y.loadPort)}</span>` : ''}
+      ${y.dischPort ? `<span class="port-badge port-badge-disch">${esc(y.dischPort)}</span>` : ''}
+    ` : '';
+
+    const editDeleteButtons = isArchived ? '' : `
+      <button class="btn btn-outline btn-sm" onclick="openModal('${esc(y.id)}')">Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteYacht('${esc(y.id)}')">Delete</button>
+    `;
+
+    const captainSection = buildCaptainSection(y, viewMode);
+
     return `
       <div class="yacht-card" id="card-${esc(y.id)}">
         <div class="yacht-card-header" onclick="toggleCard('${esc(y.id)}')">
-          <span class="yacht-time" id="time-${esc(y.id)}" onclick="editTime(event,'${esc(y.id)}')" title="Tap to edit time">${esc(y.time) || '—'}</span>
+          <span class="yacht-time" id="time-${esc(y.id)}" onclick="${isArchived ? '' : `editTime(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to edit time'}">${esc(y.time) || '—'}</span>
           <span class="yacht-name-wrap">
             <span class="yacht-make">${primaryLabel}</span>
             ${secondaryLabel ? `<span class="yacht-name">${secondaryLabel}</span>` : ''}
           </span>
-          ${y.group  ? `<span class="group-badge">${esc(y.group)}</span>` : ''}
-          ${y.berth  ? `<span class="yacht-berth">${esc(y.berth)}</span>` : ''}
-          <span class="badge ${sc}" onclick="editStatus(event,'${esc(y.id)}')" title="Tap to change status">${badgeLabel(y.status)}</span>
-          <span class="chevron">▾</span>
+          ${portBadges}
+          ${y.group ? `<span class="group-badge">${esc(y.group)}</span>` : ''}
+          <span class="badge ${sc}" onclick="${isArchived ? '' : `editStatus(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to change status'}">${badgeLabel(y.status)}</span>
+          <span class="chevron">&#9662;</span>
         </div>
         <div class="yacht-details">
+          ${captainSection}
           <div class="details-grid">
-            ${di('Captain',     y.captain)}
-            ${di('Phone',       y.phone)}
+            ${di('Load Port',    y.loadPort)}
+            ${di('Disch Port',  y.dischPort)}
             ${di('Email',       y.email)}
             ${di('Agent',       y.agent)}
             ${di('Agent Phone', y.agentPhone)}
-            ${di('LOA',         y.loa)}
             ${di('Berth',       y.berth)}
             ${di('Group',       y.group)}
           </div>
           ${y.notes ? `<div class="notes-row"><label>Notes</label><p>${esc(y.notes)}</p></div>` : ''}
-          <div class="card-actions">
-            <button class="btn btn-outline btn-sm" onclick="openModal('${esc(y.id)}')">✏️ Edit</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteYacht('${esc(y.id)}')">Delete</button>
-          </div>
+          ${!isArchived ? `<div class="card-actions">${editDeleteButtons}</div>` : ''}
         </div>
       </div>`;
   }
 
+  function buildCaptainSection(y, viewMode) {
+    let html = '';
+    if (viewMode === 'LOAD') {
+      html += captainBlock(y.captain, y.phone, 'LOAD CAPTAIN', 'load-captain');
+    } else if (viewMode === 'DISCH') {
+      html += captainBlock(y.dischCaptain, y.dischPhone, 'DISCHARGE CAPTAIN', 'disch-captain');
+    } else {
+      // ALL view — show both
+      if (y.captain || y.phone) html += captainBlock(y.captain, y.phone, 'LOAD CAPTAIN', 'load-captain');
+      if (y.dischCaptain || y.dischPhone) html += captainBlock(y.dischCaptain, y.dischPhone, 'DISCHARGE CAPTAIN', 'disch-captain');
+    }
+    return html;
+  }
+
+  function captainBlock(name, phone, label, className) {
+    if (!name && !phone) return '';
+    return `<div class="captain-highlight ${className}">
+      <span class="cap-label">${label}</span>
+      ${name ? `<span class="cap-name">${esc(name)}</span>` : ''}
+      ${phone ? `<span class="cap-phone">${esc(phone)}</span>` : ''}
+    </div>`;
+  }
+
   function di(label, value) {
     if (!value) return '';
-    const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     return `<div class="detail-item"><label>${label}</label><span>${esc(value)}</span></div>`;
   }
 
@@ -794,30 +1287,54 @@
     if (card) card.classList.toggle('open');
   }
 
+  // ── Modal ────────────────────────────────────────────────────────────────────
+  function populateVesselSelect(selectedId) {
+    const sel = document.getElementById('f-vessel');
+    const activeVessels = (data.vessels || []).filter(v => !v.archived);
+    sel.innerHTML = activeVessels.map(v =>
+      `<option value="${esc(v.id)}"${v.id === selectedId ? ' selected' : ''}>${esc(v.name)}</option>`
+    ).join('');
+  }
+
   function openModal(id) {
     editingId = id || null;
-    const y = id ? (yachts.find(y => y.id === id) || {}) : {};
+    let y = {};
+    let vesselId = activeVesselId;
+
+    if (id) {
+      y = findYachtById(id) || {};
+      const v = findVesselForYacht(id);
+      vesselId = v ? v.id : activeVesselId;
+    }
+    editingVesselId = vesselId;
+
     document.getElementById('modalTitle').textContent = id ? 'Edit Yacht' : 'Add Yacht';
-    document.getElementById('f-name').value       = y.name       || '';
-    document.getElementById('f-loa').value        = y.loa        || '';
-    document.getElementById('f-date').value       = y.date       || '';
-    document.getElementById('f-time').value       = y.time       || '';
-    document.getElementById('f-group').value      = y.group      || '';
-    document.getElementById('f-berth').value      = y.berth      || '';
-    document.getElementById('f-captain').value    = y.captain    || '';
-    document.getElementById('f-phone').value      = y.phone      || '';
-    document.getElementById('f-email').value      = y.email      || '';
-    document.getElementById('f-status').value     = y.status     || 'updated';
-    document.getElementById('f-agent').value      = y.agent      || '';
-    document.getElementById('f-agentPhone').value = y.agentPhone || '';
-    document.getElementById('f-notes').value      = y.notes      || '';
+    populateVesselSelect(vesselId);
+    document.getElementById('f-make').value        = y.make        || '';
+    document.getElementById('f-name').value        = y.name        || '';
+    document.getElementById('f-loadPort').value    = y.loadPort    || '';
+    document.getElementById('f-dischPort').value   = y.dischPort   || '';
+    document.getElementById('f-date').value        = y.date        || '';
+    document.getElementById('f-time').value        = y.time        || '';
+    document.getElementById('f-group').value       = y.group       || '';
+    document.getElementById('f-berth').value       = y.berth       || '';
+    document.getElementById('f-captain').value     = y.captain     || '';
+    document.getElementById('f-phone').value       = y.phone       || '';
+    document.getElementById('f-email').value       = y.email       || '';
+    document.getElementById('f-dischCaptain').value = y.dischCaptain || '';
+    document.getElementById('f-dischPhone').value  = y.dischPhone  || '';
+    document.getElementById('f-status').value      = y.status      || 'updated';
+    document.getElementById('f-agent').value       = y.agent       || '';
+    document.getElementById('f-agentPhone').value  = y.agentPhone  || '';
+    document.getElementById('f-notes').value       = y.notes       || '';
     document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('f-name').focus(), 50);
+    setTimeout(() => document.getElementById('f-make').focus(), 50);
   }
 
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('open');
     editingId = null;
+    editingVesselId = null;
   }
 
   function handleOverlayClick(e) {
@@ -825,200 +1342,97 @@
   }
 
   function saveYacht() {
+    const make = document.getElementById('f-make').value.trim();
     const name = document.getElementById('f-name').value.trim();
     const date = document.getElementById('f-date').value;
     const time = document.getElementById('f-time').value;
-    if (!name || !date || !time) {
-      alert('Please fill in Yacht Name, Load Date and Load Time.');
+    const targetVesselId = document.getElementById('f-vessel').value;
+
+    if (!make || !date || !time) {
+      alert('Please fill in Make/Type, Date and Time.');
       return;
     }
-    const data = {
+
+    const formData = {
+      make,
       name,
-      loa:        document.getElementById('f-loa').value.trim(),
+      loadPort:     document.getElementById('f-loadPort').value.trim().toUpperCase(),
+      dischPort:    document.getElementById('f-dischPort').value.trim().toUpperCase(),
       date,
       time,
-      group:      document.getElementById('f-group').value.trim(),
-      berth:      document.getElementById('f-berth').value.trim(),
-      captain:    document.getElementById('f-captain').value.trim(),
-      phone:      document.getElementById('f-phone').value.trim(),
-      email:      document.getElementById('f-email').value.trim(),
-      status:     document.getElementById('f-status').value,
-      agent:      document.getElementById('f-agent').value.trim(),
-      agentPhone: document.getElementById('f-agentPhone').value.trim(),
-      notes:      document.getElementById('f-notes').value.trim(),
+      group:        document.getElementById('f-group').value.trim(),
+      berth:        document.getElementById('f-berth').value.trim(),
+      captain:      document.getElementById('f-captain').value.trim(),
+      phone:        document.getElementById('f-phone').value.trim(),
+      email:        document.getElementById('f-email').value.trim(),
+      dischCaptain: document.getElementById('f-dischCaptain').value.trim(),
+      dischPhone:   document.getElementById('f-dischPhone').value.trim(),
+      status:       document.getElementById('f-status').value,
+      agent:        document.getElementById('f-agent').value.trim(),
+      agentPhone:   document.getElementById('f-agentPhone').value.trim(),
+      notes:        document.getElementById('f-notes').value.trim(),
     };
+
     if (editingId) {
-      const idx = yachts.findIndex(y => y.id === editingId);
-      if (idx !== -1) {
-        const old = yachts[idx];
-        const scheduleChanged = ['date','time','group','berth'].some(f => data[f] !== old[f]);
-        const statusExplicitlyChanged = data.status !== old.status;
-        if (scheduleChanged && !statusExplicitlyChanged) {
-          data.status = 'new-schedule';
+      // Find in original vessel
+      const origVessel = findVesselForYacht(editingId);
+      if (origVessel) {
+        const idx = origVessel.yachts.findIndex(y => y.id === editingId);
+        if (idx !== -1) {
+          const old = origVessel.yachts[idx];
+          const scheduleChanged = ['date','time','group','berth'].some(f => formData[f] !== old[f]);
+          const statusExplicitlyChanged = formData.status !== old.status;
+          if (scheduleChanged && !statusExplicitlyChanged) {
+            formData.status = 'new-schedule';
+          }
+
+          // If vessel changed, move the yacht
+          if (targetVesselId && targetVesselId !== origVessel.id) {
+            origVessel.yachts.splice(idx, 1);
+            const targetVessel = data.vessels.find(v => v.id === targetVesselId);
+            if (targetVessel) targetVessel.yachts.push({ ...old, ...formData });
+          } else {
+            origVessel.yachts[idx] = { ...old, ...formData };
+          }
+
+          setOverride(editingId, formData);
         }
-        yachts[idx] = { ...old, ...data };
-        // Save all edited fields as overrides so they survive a refresh
-        setOverride(editingId, data);
       }
     } else {
-      data.id = Math.random().toString(36).substr(2, 9);
-      yachts.push(data);
+      // New yacht
+      const targetVessel = data.vessels.find(v => v.id === targetVesselId) || data.vessels[0];
+      if (!targetVessel) { alert('No vessel available.'); return; }
+      formData.id = Math.random().toString(36).substr(2, 9);
+      if (!targetVessel.yachts) targetVessel.yachts = [];
+      targetVessel.yachts.push(formData);
     }
+
     saveData();
     closeModal();
-    render();
+    // Update active vessel if needed
+    if (targetVesselId && !editingId) activeVesselId = targetVesselId;
+    renderVesselBar();
+    renderPortBar();
+    renderMain();
   }
 
   function deleteYacht(id) {
-    const y = yachts.find(y => y.id === id);
+    const y = findYachtById(id);
     if (!y) return;
-    if (!confirm(`Delete "${y.name}"? This cannot be undone.`)) return;
-    yachts = yachts.filter(y => y.id !== id);
+    if (!confirm(`Delete "${y.make || y.name}"? This cannot be undone.`)) return;
+    const v = findVesselForYacht(id);
+    if (v) v.yachts = v.yachts.filter(y => y.id !== id);
     saveData();
-    render();
+    renderPortBar();
+    renderMain();
   }
 
-  async function refreshData() {
-    const btn = document.getElementById('refreshBtn');
-    btn.disabled = true;
-    btn.textContent = '⟳ Refreshing…';
-    try {
-      const resp = await fetch('./yachts.json?_=' + Date.now());
-      if (resp.ok) {
-        yachts = await resp.json();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(yachts));
-        renderSummary();
-        const container = document.getElementById('schedule');
-        // Re-render without re-fetching
-        const sorted = [...yachts].sort((a, b) => {
-          const da = (a.date || '') + 'T' + (a.time || '00:00');
-          const db = (b.date || '') + 'T' + (b.time || '00:00');
-          return da.localeCompare(db);
-        });
-        const groups = sorted.reduce((acc, y) => {
-          const key = y.date || 'No date';
-          if (!acc[key]) acc[key] = [];
-          acc[key].push(y);
-          return acc;
-        }, {});
-        container.innerHTML = Object.entries(groups).map(([date, dayYachts]) => `
-          <div class="day-group">
-            <div class="day-header">${date !== 'No date' ? formatDate(date) : 'No date set'}</div>
-            ${dayYachts.map(y => yachtCard(y)).join('')}
-          </div>
-        `).join('');
-        btn.textContent = '✓ Updated';
-        setTimeout(() => { btn.textContent = '⟳ Refresh'; btn.disabled = false; }, 2000);
-      } else {
-        throw new Error('Server returned ' + resp.status);
-      }
-    } catch(e) {
-      btn.textContent = '✗ Failed';
-      setTimeout(() => { btn.textContent = '⟳ Refresh'; btn.disabled = false; }, 2000);
-    }
-  }
-
-  // ── GitHub push ──────────────────────────────────────────────────────────────
-  const GH_OWNER  = 'oliverbid';
-  const GH_REPO   = 'mhl-pwa';
-  const GH_FILE   = 'yachts.json';
-  const GH_BRANCH = 'main';
-  const TOKEN_KEY = 'mhl-lp-gh-token';
-
-  function closeTokenModal() {
-    document.getElementById('tokenOverlay').classList.remove('open');
-  }
-
-  function saveToken() {
-    const t = document.getElementById('tokenInput').value.trim();
-    if (!t) return;
-    localStorage.setItem(TOKEN_KEY, t);
-    closeTokenModal();
-    doPush(t);
-  }
-
-  async function pushToGitHub() {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) {
-      document.getElementById('tokenInput').value = '';
-      document.getElementById('tokenOverlay').classList.add('open');
-      setTimeout(() => document.getElementById('tokenInput').focus(), 100);
-      return;
-    }
-    await doPush(token);
-  }
-
-  async function doPush(token) {
-    const btn = document.getElementById('pushBtn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Pushing…';
-    btn.classList.remove('success', 'error');
-
-    const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
-    const headers = {
-      'Authorization': `token ${token}`,
-      'Accept': 'application/vnd.github+json',
-      'Content-Type': 'application/json',
-    };
-
-    try {
-      // Get current SHA
-      const getResp = await fetch(`${url}?ref=${GH_BRANCH}`, { headers });
-      if (getResp.status === 401) {
-        localStorage.removeItem(TOKEN_KEY);
-        btn.disabled = false;
-        btn.textContent = '↑ Push Changes';
-        alert('Token rejected — please re-enter it.');
-        pushToGitHub();
-        return;
-      }
-      const fileData = await getResp.json();
-      const sha = fileData.sha;
-
-      // Encode content (UTF-8 safe)
-      const json = JSON.stringify(yachts, null, 2);
-      const encoded = btoa(unescape(encodeURIComponent(json)));
-
-      const putResp = await fetch(url, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          message: 'Update yachts.json from mobile',
-          content: encoded,
-          sha,
-          branch: GH_BRANCH,
-        }),
-      });
-
-      if (putResp.ok) {
-        clearOverrides(); // changes are now on GitHub, no longer need local copies
-        btn.textContent = '✓ Pushed!';
-        btn.classList.add('success');
-        setTimeout(() => {
-          btn.textContent = '↑ Push Changes';
-          btn.classList.remove('success');
-          btn.disabled = false;
-        }, 3000);
-      } else {
-        throw new Error(`GitHub returned ${putResp.status}`);
-      }
-    } catch (e) {
-      btn.textContent = '✗ Failed';
-      btn.classList.add('error');
-      setTimeout(() => {
-        btn.textContent = '↑ Push Changes';
-        btn.classList.remove('error');
-        btn.disabled = false;
-      }, 3000);
-      console.error('Push error:', e);
-    }
-  }
-
+  // ── Inline time editing ───────────────────────────────────────────────────────
   function editTime(event, id) {
     event.stopPropagation();
     const span = document.getElementById('time-' + id);
-    if (!span || span.querySelector('input')) return; // already editing
-    const y = yachts.find(y => y.id === id);
+    if (!span || span.querySelector('input')) return;
+    const y = findYachtById(id);
     const current = y ? (y.time || '') : '';
     const input = document.createElement('input');
     input.type = 'time';
@@ -1036,21 +1450,20 @@
   }
 
   function saveTime(id, newTime) {
-    const idx = yachts.findIndex(y => y.id === id);
-    if (idx === -1) return;
-    if (yachts[idx].time !== newTime) {
-      yachts[idx].time = newTime;
-      yachts[idx].status = 'new-schedule';
+    const y = findYachtById(id);
+    if (!y) return;
+    if (y.time !== newTime) {
+      y.time = newTime;
+      y.status = 'new-schedule';
       setOverride(id, { time: newTime, status: 'new-schedule' });
     }
     saveData();
-    render();
+    renderMain();
   }
 
+  // ── Inline status editing ─────────────────────────────────────────────────────
   function editStatus(event, id) {
     event.stopPropagation();
-
-    // Remove any existing picker
     const old = document.getElementById('status-picker');
     if (old) { old.remove(); return; }
 
@@ -1077,7 +1490,6 @@
       picker.appendChild(btn);
     });
 
-    // Position below the badge
     const rect = event.target.getBoundingClientRect();
     const top  = Math.min(rect.bottom + 4, window.innerHeight - 260);
     const left = Math.min(rect.left, window.innerWidth - 160);
@@ -1085,23 +1497,139 @@
     picker.style.left = left + 'px';
     document.body.appendChild(picker);
 
-    // Close on any outside tap
     setTimeout(() => {
       document.addEventListener('click', () => { picker.remove(); }, { once: true });
     }, 0);
   }
 
   function saveStatus(id, newStatus) {
-    const idx = yachts.findIndex(y => y.id === id);
-    if (idx === -1) return;
-    yachts[idx].status = newStatus;
+    const y = findYachtById(id);
+    if (!y) return;
+    y.status = newStatus;
     setOverride(id, { status: newStatus });
     saveData();
-    render();
+    renderMain();
   }
 
-  // Boot
-  render();
+  // ── Refresh ───────────────────────────────────────────────────────────────────
+  async function refreshData() {
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    btn.textContent = '&#x27F3; Refreshing...';
+    try {
+      await loadData();
+      renderVesselBar();
+      renderPortBar();
+      renderMain();
+      btn.textContent = 'Updated';
+      setTimeout(() => { btn.textContent = '&#x27F3; Refresh'; btn.disabled = false; }, 2000);
+    } catch(e) {
+      btn.textContent = 'Failed';
+      setTimeout(() => { btn.textContent = '&#x27F3; Refresh'; btn.disabled = false; }, 2000);
+    }
+  }
+
+  // ── GitHub push ───────────────────────────────────────────────────────────────
+  function closeTokenModal() {
+    document.getElementById('tokenOverlay').classList.remove('open');
+  }
+
+  function saveToken() {
+    const t = document.getElementById('tokenInput').value.trim();
+    if (!t) return;
+    localStorage.setItem(TOKEN_KEY, t);
+    closeTokenModal();
+    doPush(t);
+  }
+
+  async function pushToGitHub() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      document.getElementById('tokenInput').value = '';
+      document.getElementById('tokenOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('tokenInput').focus(), 100);
+      return;
+    }
+    await doPush(token);
+  }
+
+  async function doPush(token) {
+    const btn = document.getElementById('pushBtn');
+    btn.disabled = true;
+    btn.textContent = 'Pushing...';
+    btn.classList.remove('success', 'error');
+
+    const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`;
+    const headers = {
+      'Authorization': `token ${token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    };
+
+    try {
+      const getResp = await fetch(`${url}?ref=${GH_BRANCH}`, { headers });
+      if (getResp.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        btn.disabled = false;
+        btn.textContent = '&#x2191; Push Changes';
+        alert('Token rejected — please re-enter it.');
+        pushToGitHub();
+        return;
+      }
+      const fileData = await getResp.json();
+      const sha = fileData.sha;
+
+      const json = JSON.stringify(data, null, 2);
+      const encoded = btoa(unescape(encodeURIComponent(json)));
+
+      const putResp = await fetch(url, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          message: 'Update yachts.json from load planner',
+          content: encoded,
+          sha,
+          branch: GH_BRANCH,
+        }),
+      });
+
+      if (putResp.ok) {
+        clearOverrides();
+        btn.textContent = 'Pushed!';
+        btn.classList.add('success');
+        setTimeout(() => {
+          btn.textContent = '&#x2191; Push Changes';
+          btn.classList.remove('success');
+          btn.disabled = false;
+        }, 3000);
+      } else {
+        throw new Error(`GitHub returned ${putResp.status}`);
+      }
+    } catch (e) {
+      btn.textContent = 'Failed';
+      btn.classList.add('error');
+      setTimeout(() => {
+        btn.textContent = '&#x2191; Push Changes';
+        btn.classList.remove('error');
+        btn.disabled = false;
+      }, 3000);
+      console.error('Push error:', e);
+    }
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────────────────
+  async function init() {
+    await loadData();
+    // Select first non-archived vessel by default
+    const first = (data.vessels || []).find(v => !v.archived);
+    activeVesselId = first ? first.id : null;
+    activePort = 'ALL';
+    renderVesselBar();
+    renderPortBar();
+    renderMain();
+  }
+
+  init();
 </script>
 </body>
 </html>
