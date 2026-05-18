@@ -266,6 +266,17 @@
       border-left: 4px solid #e65100;
     }
 
+    /* ── Role bar (LOADING / DISCHARGING) ── */
+    .card-role-bar {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 3px 16px;
+    }
+    .card-role-loading    { background: #e3f2fd; color: #1565c0; border-bottom: 1px solid #bbdefb; }
+    .card-role-discharging{ background: #fff3e0; color: #e65100; border-bottom: 1px solid #ffe0b2; }
+
     /* ── Day group ── */
     .day-group { margin-bottom: 28px; }
 
@@ -1193,7 +1204,8 @@
   }
 
   // Shared helper: date → team grouping, cards with times (load view)
-  function buildDateTeamGroupsHTML(yachts, isArchived) {
+  // viewMode: 'ALL' (no role bar) or 'LOAD' (blue LOADING bar on each card)
+  function buildDateTeamGroupsHTML(yachts, isArchived, viewMode = 'ALL') {
     const sorted = [...yachts].sort((a, b) => {
       const da = (a.date || '') + 'T' + (a.time || '00:00');
       const db = (b.date || '') + 'T' + (b.time || '00:00');
@@ -1221,7 +1233,7 @@
           : '';
         return `<div class="team-group">
           ${teamHeader}
-          ${teamMap[teamKey].map(y => yachtCard(y, 'ALL', isArchived)).join('')}
+          ${teamMap[teamKey].map(y => yachtCard(y, viewMode, isArchived)).join('')}
         </div>`;
       }).join('');
       return `<div class="day-group">
@@ -1257,7 +1269,7 @@
   }
 
   function renderAllPorts(yachts, container, isArchived) {
-    container.innerHTML = buildDateTeamGroupsHTML(yachts, isArchived);
+    container.innerHTML = buildDateTeamGroupsHTML(yachts, isArchived, 'ALL');
   }
 
   function renderSinglePort(yachts, container, port, isArchived) {
@@ -1284,7 +1296,7 @@
           <span style="font-weight:400;opacity:0.7">${loadYachts.length} yacht${loadYachts.length !== 1 ? 's' : ''}</span>
         </div>`;
       }
-      html += buildDateTeamGroupsHTML(loadYachts, isArchived);
+      html += buildDateTeamGroupsHTML(loadYachts, isArchived, 'LOAD');
     }
 
     if (dischYachts.length) {
@@ -1334,8 +1346,16 @@
 
     const captainSection = buildCaptainSection(y, viewMode);
 
+    // Role bar: only on port-filtered views
+    const roleBar = viewMode === 'LOAD'
+      ? `<div class="card-role-bar card-role-loading">Loading</div>`
+      : viewMode === 'DISCH'
+        ? `<div class="card-role-bar card-role-discharging">Discharging</div>`
+        : '';
+
     return `
       <div class="yacht-card" id="card-${esc(y.id)}">
+        ${roleBar}
         <div class="yacht-card-header" onclick="toggleCard('${esc(y.id)}')">
           ${timeEl}
           <span class="yacht-name-wrap">
