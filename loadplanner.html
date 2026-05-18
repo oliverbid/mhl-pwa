@@ -339,6 +339,7 @@
       transition: background 0.15s;
     }
     .yacht-time:hover { background: rgba(46,117,182,0.1); }
+    .yacht-time-tbd { color: var(--muted); font-weight: 400; font-size: 0.9rem; }
 
     .yacht-time-input {
       font-size: 1.05rem;
@@ -812,6 +813,18 @@
       </div>
     </div>
 
+    <div class="section-label">Discharge Schedule</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Discharge Date</label>
+        <input type="date" id="f-dischDate">
+      </div>
+      <div class="form-group">
+        <label>Discharge Time</label>
+        <input type="time" id="f-dischTime">
+      </div>
+    </div>
+
     <div class="section-label">Agent</div>
     <div class="form-row">
       <div class="form-group">
@@ -1208,7 +1221,7 @@
           : '';
         return `<div class="team-group">
           ${teamHeader}
-          ${teamMap[teamKey].map(y => yachtCard(y, 'ALL', isArchived, true)).join('')}
+          ${teamMap[teamKey].map(y => yachtCard(y, 'ALL', isArchived)).join('')}
         </div>`;
       }).join('');
       return `<div class="day-group">
@@ -1238,7 +1251,7 @@
         : '';
       return `<div class="team-group">
         ${teamHeader}
-        ${teamMap[teamKey].map(y => yachtCard(y, 'DISCH', isArchived, false)).join('')}
+        ${teamMap[teamKey].map(y => yachtCard(y, 'DISCH', isArchived)).join('')}
       </div>`;
     }).join('');
   }
@@ -1288,8 +1301,7 @@
   }
 
   // ── Yacht card ───────────────────────────────────────────────────────────────
-  // showTime=true → load time displayed; false → discharge view (time TBD)
-  function yachtCard(y, viewMode, isArchived, showTime = true) {
+  function yachtCard(y, viewMode, isArchived) {
     const sc = badgeClass(y.status);
     const primaryLabel = esc(y.make || y.name || '');
     const secondaryLabel = (y.make && y.name && y.make !== y.name) ? esc(y.name) : '';
@@ -1301,9 +1313,19 @@
         ${y.dischPort ? `<span class="port-badge port-badge-disch">${esc(y.dischPort)}</span>` : ''}
       </div>`;
 
-    const timeEl = showTime
-      ? `<span class="yacht-time" id="time-${esc(y.id)}" onclick="${isArchived ? '' : `editTime(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to edit time'}">${esc(y.time) || '—'}</span>`
-      : '';
+    // Discharge view: show dischTime (muted dash if not yet set, tap to set)
+    // All other views: show load time
+    let timeEl;
+    if (viewMode === 'DISCH') {
+      const hasDT = !!y.dischTime;
+      timeEl = `<span class="yacht-time${hasDT ? '' : ' yacht-time-tbd'}" id="dtime-${esc(y.id)}"
+        onclick="${isArchived ? '' : `editDischTime(event,'${esc(y.id)}')`}"
+        title="${isArchived ? '' : 'Tap to set discharge time'}">${esc(y.dischTime) || '—'}</span>`;
+    } else {
+      timeEl = `<span class="yacht-time" id="time-${esc(y.id)}"
+        onclick="${isArchived ? '' : `editTime(event,'${esc(y.id)}')`}"
+        title="${isArchived ? '' : 'Tap to edit time'}">${esc(y.time) || '—'}</span>`;
+    }
 
     const editDeleteButtons = isArchived ? '' : `
       <button class="btn btn-outline btn-sm" onclick="openModal('${esc(y.id)}')">Edit</button>
@@ -1410,6 +1432,8 @@
     document.getElementById('f-email').value       = y.email       || '';
     document.getElementById('f-dischCaptain').value = y.dischCaptain || '';
     document.getElementById('f-dischPhone').value  = y.dischPhone  || '';
+    document.getElementById('f-dischDate').value   = y.dischDate   || '';
+    document.getElementById('f-dischTime').value   = y.dischTime   || '';
     document.getElementById('f-status').value      = y.status      || 'updated';
     document.getElementById('f-agent').value       = y.agent       || '';
     document.getElementById('f-agentPhone').value  = y.agentPhone  || '';
@@ -1454,6 +1478,8 @@
       email:        document.getElementById('f-email').value.trim(),
       dischCaptain: document.getElementById('f-dischCaptain').value.trim(),
       dischPhone:   document.getElementById('f-dischPhone').value.trim(),
+      dischDate:    document.getElementById('f-dischDate').value,
+      dischTime:    document.getElementById('f-dischTime').value,
       status:       document.getElementById('f-status').value,
       agent:        document.getElementById('f-agent').value.trim(),
       agentPhone:   document.getElementById('f-agentPhone').value.trim(),
@@ -1543,6 +1569,39 @@
       y.time = newTime;
       y.status = 'new-schedule';
       setOverride(id, { time: newTime, status: 'new-schedule' });
+    }
+    saveData();
+    renderMain();
+  }
+
+  // ── Inline discharge time editing ─────────────────────────────────────────────
+  function editDischTime(event, id) {
+    event.stopPropagation();
+    const span = document.getElementById('dtime-' + id);
+    if (!span || span.querySelector('input')) return;
+    const y = findYachtById(id);
+    const current = y ? (y.dischTime || '') : '';
+    const input = document.createElement('input');
+    input.type = 'time';
+    input.value = current;
+    input.className = 'yacht-time-input';
+    input.onclick = e => e.stopPropagation();
+    input.onblur = () => saveDischTime(id, input.value);
+    input.onkeydown = e => {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') { span.textContent = current || '—'; }
+    };
+    span.textContent = '';
+    span.appendChild(input);
+    setTimeout(() => input.focus(), 10);
+  }
+
+  function saveDischTime(id, newTime) {
+    const y = findYachtById(id);
+    if (!y) return;
+    if (y.dischTime !== newTime) {
+      y.dischTime = newTime;
+      setOverride(id, { dischTime: newTime });
     }
     saveData();
     renderMain();
