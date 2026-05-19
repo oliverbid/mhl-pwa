@@ -1,59 +1,30 @@
-const CACHE_NAME = 'mhl-pwa-v1';
-const BASE = '/mhl-pwa';
-const ASSETS = [
-  BASE + '/',
-  BASE + '/index.html',
-  BASE + '/report.html',
-  BASE + '/crew.html',
-  BASE + '/admin.html',
-  BASE + '/style.css',
-  BASE + '/config.json',
-  BASE + '/manifest.json'
-];
+// MHL Load Planner — Service Worker
+// Network-first strategy: always fetches fresh content, falls back to cache offline.
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
-});
+const CACHE = 'mhl-lp-v2';
+
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', event => {
+  // Remove old caches and take control immediately
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
-  // Network-first for config.json so admin updates propagate
-  if (event.request.url.includes('config.json')) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Cache-first for everything else
+  // Network-first: try the network, cache the result, fall back to cache if offline
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (!response || response.status !== 200 || response.type === 'opaque') {
-          return response;
+    fetch(event.request, { cache: 'no-cache' })
+      .then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE).then(c => c.put(event.request, clone));
         }
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
