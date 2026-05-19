@@ -399,6 +399,50 @@
       flex-shrink: 0;
     }
 
+    /* ── Contact toggle button ── */
+    .contact-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.85rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      user-select: none;
+      line-height: 1;
+    }
+    .contact-btn:hover { border-color: #2e7d32; color: #2e7d32; }
+    .contact-btn.contacted {
+      border-color: #2e7d32;
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-weight: 700;
+    }
+
+    /* Contact filter pills (appended to port bar) */
+    .contact-pill {
+      padding: 5px 14px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .contact-pill:hover { border-color: #2e7d32; color: #2e7d32; }
+    .contact-pill.active-yes { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+    .contact-pill.active-no  { background: #c62828; border-color: #c62828; color: #fff; }
+
     /* Team sub-header within a day group */
     .team-group { margin-bottom: 12px; }
     .team-header {
@@ -879,6 +923,7 @@
   let data = { vessels: [] };  // full {vessels:[...]} object
   let activeVesselId = null;
   let activePort = 'ALL';
+  let contactFilter = 'ALL'; // 'ALL' | 'contacted' | 'not-contacted'
   let showArchived = false;
   let editingId = null;
   let editingVesselId = null; // vessel the yacht being edited belongs to
@@ -1036,7 +1081,10 @@
 
   function getActiveYachts() {
     const v = getActiveVessel();
-    return v ? (v.yachts || []) : [];
+    let yachts = v ? (v.yachts || []) : [];
+    if (contactFilter === 'contacted')     yachts = yachts.filter(y => !!y.contacted);
+    if (contactFilter === 'not-contacted') yachts = yachts.filter(y => !y.contacted);
+    return yachts;
   }
 
   function allYachtsFlat() {
@@ -1088,6 +1136,7 @@
   function selectVessel(id) {
     activeVesselId = id;
     activePort = 'ALL';
+    contactFilter = 'ALL';
     renderVesselBar();
     renderPortBar();
     renderMain();
@@ -1138,8 +1187,19 @@
       html += `<button class="port-pill${activePort === p ? ' active' : ''}" onclick="selectPort('${esc(p)}')">${esc(p)}</button>`;
     });
 
+    // Contact filter pills with divider
+    html += `<div class="vessel-bar-divider"></div>`;
+    html += `<button class="contact-pill${contactFilter === 'contacted'    ? ' active-yes' : ''}" onclick="selectContactFilter('contacted')">✓ Contacted</button>`;
+    html += `<button class="contact-pill${contactFilter === 'not-contacted' ? ' active-no'  : ''}" onclick="selectContactFilter('not-contacted')">✗ Not Contacted</button>`;
+
     bar.innerHTML = html;
     bar.classList.remove('hidden');
+  }
+
+  function selectContactFilter(filter) {
+    contactFilter = contactFilter === filter ? 'ALL' : filter; // tap again to clear
+    renderPortBar();
+    renderMain();
   }
 
   function selectPort(port) {
@@ -1150,19 +1210,17 @@
 
   // ── Summary bar ──────────────────────────────────────────────────────────────
   function renderSummary() {
-    const yachts = getActiveYachts();
-    const total = yachts.length;
-    const byStatus = yachts.reduce((acc, y) => {
-      const s = y.status || 'updated';
-      acc[s] = (acc[s] || 0) + 1;
-      return acc;
-    }, {});
+    // Use full unfiltered yacht list for summary totals
+    const v = getActiveVessel();
+    const allYachts = v ? (v.yachts || []) : [];
+    const total     = allYachts.length;
+    const contacted = allYachts.filter(y => !!y.contacted).length;
+    const notYet    = total - contacted;
 
     document.getElementById('summaryBar').innerHTML = `
       <div class="summary-chip"><strong>${total}</strong> yacht${total !== 1 ? 's' : ''}</div>
-      ${Object.entries(byStatus).map(([s, n]) =>
-        `<div class="summary-chip"><strong>${n}</strong> ${badgeLabel(s)}</div>`
-      ).join('')}
+      <div class="summary-chip" style="color:#2e7d32"><strong>${contacted}</strong> contacted</div>
+      ${notYet > 0 ? `<div class="summary-chip" style="color:#c62828"><strong>${notYet}</strong> not yet</div>` : ''}
     `;
   }
 
@@ -1363,6 +1421,10 @@
             ${secondaryLabel ? `<span class="yacht-name">${secondaryLabel}</span>` : ''}
           </span>
           ${portBadges}
+          <span class="contact-btn${y.contacted ? ' contacted' : ''}"
+            onclick="${isArchived ? '' : `toggleContact(event,'${esc(y.id)}')`}"
+            title="${y.contacted ? 'In contact ✓' : 'Not yet contacted — tap to mark'}"
+          >${y.contacted ? '✓' : '○'}</span>
           <span class="badge ${sc}" onclick="${isArchived ? '' : `editStatus(event,'${esc(y.id)}')`}" title="${isArchived ? '' : 'Tap to change status'}">${badgeShortLabel(y.status)}</span>
           <span class="chevron">&#9662;</span>
         </div>
@@ -1673,6 +1735,17 @@
     if (!y) return;
     y.status = newStatus;
     setOverride(id, { status: newStatus });
+    saveData();
+    renderMain();
+  }
+
+  // ── Contact toggle ─────────────────────────────────────────────────────────────
+  function toggleContact(event, id) {
+    event.stopPropagation();
+    const y = findYachtById(id);
+    if (!y) return;
+    y.contacted = !y.contacted;
+    setOverride(id, { contacted: y.contacted });
     saveData();
     renderMain();
   }
