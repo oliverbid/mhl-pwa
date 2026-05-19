@@ -23,9 +23,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "bb332fa3b",
@@ -45,9 +44,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "contacted": false
         },
         {
           "id": "6e0f1af40",
@@ -67,9 +65,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "960c3b299",
@@ -89,9 +86,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "43c2a17bd",
@@ -111,9 +107,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "42061153c",
@@ -133,9 +128,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "f4053c2e9",
@@ -155,9 +149,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "20d84261a",
@@ -177,9 +170,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "2533a6c9f",
@@ -199,9 +191,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "2e6e485ca",
@@ -221,9 +212,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "e58bbb4ee",
@@ -243,9 +233,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "contacted": false
         },
         {
           "id": "9b399ee50",
@@ -265,9 +254,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "7d5cfb0f0",
@@ -287,9 +275,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "83f72845a",
@@ -309,9 +296,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "contacted": false
         },
         {
           "id": "46b2d6617",
@@ -331,9 +317,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "3ab694581",
@@ -353,9 +338,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": "YES"
+          "contacted": true
         },
         {
           "id": "f44ed4bda",
@@ -375,9 +359,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "contacted": false
         }
       ]
     }
