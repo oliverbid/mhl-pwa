@@ -45,7 +45,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "6e0f1af40",
@@ -297,7 +297,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "46b2d6617",
@@ -360,7 +360,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         }
       ]
     }
