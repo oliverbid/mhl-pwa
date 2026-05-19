@@ -14,7 +14,7 @@
           "date": "2026-05-20",
           "time": "10:30",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Scott Dennis",
           "phone": "905-868-4773",
           "email": "",
@@ -25,7 +25,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "bb332fa3b",
@@ -36,9 +36,9 @@
           "date": "2026-05-20",
           "time": "13:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Rupert Gregory",
-          "phone": "1-954-907-5622",
+          "phone": "954-907-5622",
           "email": "",
           "dischCaptain": "William Jordan",
           "dischPhone": "1-954-907-5622",
@@ -58,7 +58,7 @@
           "date": "2026-05-20",
           "time": "15:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "David Clark",
           "phone": "616-566-6383",
           "email": "",
@@ -69,7 +69,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "960c3b299",
@@ -80,7 +80,7 @@
           "date": "2026-05-20",
           "time": "16:30",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Dan Devisser",
           "phone": "616-836-4091",
           "email": "",
@@ -91,7 +91,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "43c2a17bd",
@@ -102,7 +102,7 @@
           "date": "2026-05-20",
           "time": "18:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Captain Jordan Tilton",
           "phone": "614-306-0539",
           "email": "",
@@ -113,7 +113,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "42061153c",
@@ -124,7 +124,7 @@
           "date": "2026-05-21",
           "time": "08:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Captain Jordan Tilton",
           "phone": "614-306-0539",
           "email": "",
@@ -135,7 +135,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "f4053c2e9",
@@ -146,7 +146,7 @@
           "date": "2026-05-21",
           "time": "11:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Ben Fowler",
           "phone": "360-477-3375",
           "email": "",
@@ -157,7 +157,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "20d84261a",
@@ -168,9 +168,9 @@
           "date": "2026-05-21",
           "time": "14:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Simon Wells",
-          "phone": "+1 954 736 0554",
+          "phone": "954-736-0554",
           "email": "",
           "dischCaptain": "Simon Wells",
           "dischPhone": "+1 954 736 0554",
@@ -179,7 +179,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "2533a6c9f",
@@ -190,7 +190,7 @@
           "date": "2026-05-21",
           "time": "18:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Captain Jordan Tilton",
           "phone": "614-306-0539",
           "email": "",
@@ -201,7 +201,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "2e6e485ca",
@@ -212,7 +212,7 @@
           "date": "2026-05-21",
           "time": "19:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Frank Lopez",
           "phone": "561-502-4705",
           "email": "",
@@ -223,7 +223,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "e58bbb4ee",
@@ -234,9 +234,9 @@
           "date": "2026-05-22",
           "time": "08:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "TERRENCE ALLEN",
-          "phone": "9547449700",
+          "phone": "954-744-9700",
           "email": "",
           "dischCaptain": "VOLODYMYR DAVYDOVYCH",
           "dischPhone": "+19547449700",
@@ -256,9 +256,9 @@
           "date": "2026-05-22",
           "time": "09:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Josh",
-          "phone": "+1 286 236 0055",
+          "phone": "286-236-0055",
           "email": "",
           "dischCaptain": "Josh",
           "dischPhone": "+1 286 236 0055",
@@ -267,7 +267,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "7d5cfb0f0",
@@ -278,7 +278,7 @@
           "date": "2026-05-22",
           "time": "10:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "David Clark",
           "phone": "616-566-6383",
           "email": "",
@@ -289,7 +289,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "83f72845a",
@@ -300,9 +300,9 @@
           "date": "2026-05-22",
           "time": "13:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Brett Harte",
-          "phone": "772.341.8828",
+          "phone": "772-341-8828",
           "email": "",
           "dischCaptain": "Brett Harte",
           "dischPhone": "772.341.8828",
@@ -322,9 +322,9 @@
           "date": "2026-05-22",
           "time": "14:30",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Stephen du Preez",
-          "phone": "1 954 268 7452",
+          "phone": "954-268-7452",
           "email": "",
           "dischCaptain": "Stephen du Preez",
           "dischPhone": "1 954 268 7452",
@@ -333,7 +333,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "3ab694581",
@@ -344,7 +344,7 @@
           "date": "2026-05-22",
           "time": "17:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "David Dumelle",
           "phone": "219-229-5657",
           "email": "",
@@ -355,7 +355,7 @@
           "agent": "",
           "agentPhone": "",
           "status": "Scheduled",
-          "notes": ""
+          "notes": "YES"
         },
         {
           "id": "f44ed4bda",
@@ -366,7 +366,7 @@
           "date": "2026-05-23",
           "time": "08:00",
           "group": "1",
-          "berth": "",
+          "berth": "27",
           "captain": "Mike D",
           "phone": "954-648-6281",
           "email": "",
