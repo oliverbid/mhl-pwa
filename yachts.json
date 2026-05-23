@@ -191,7 +191,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
+          "status": "loaded",
           "contacted": true,
           "agentPhone": "",
           "notes": ""
@@ -214,7 +214,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
+          "status": "loaded",
           "contacted": true,
           "agentPhone": "",
           "notes": ""
@@ -237,7 +237,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -258,7 +258,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -279,7 +279,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -300,7 +300,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -321,7 +321,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -331,7 +331,7 @@
           "loadPort": "PEV",
           "dischPort": "SAR",
           "date": "2026-05-23",
-          "time": "08:00",
+          "time": "11:00",
           "group": "1",
           "berth": "27",
           "captain": "David Dumelle",
@@ -342,7 +342,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
+          "status": "updated",
           "contacted": true,
           "agentPhone": "",
           "notes": ""
@@ -354,7 +354,7 @@
           "loadPort": "PEV",
           "dischPort": "SAR",
           "date": "2026-05-23",
-          "time": "13:00",
+          "time": "08:00",
           "group": "1",
           "berth": "27",
           "captain": "Mike D",
