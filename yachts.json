@@ -15,8 +15,8 @@
           "time": "08:00",
           "group": "1",
           "berth": "30E",
-          "captain": "Racso Bustamante",
-          "phone": "3053080025",
+          "captain": "FRANCO",
+          "phone": "9546733462",
           "email": "",
           "dischCaptain": "Reinart Mostert",
           "dischPhone": "3053080025",
@@ -24,7 +24,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "a146629eb",
@@ -37,7 +37,7 @@
           "group": "1",
           "berth": "30E",
           "captain": "Martin",
-          "phone": "+1 7862886525",
+          "phone": "7862886525",
           "email": "",
           "dischCaptain": "CLAUDIO POTENZA",
           "dischPhone": "+1 7862886525",
@@ -45,7 +45,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "e89558fa0",
@@ -59,14 +59,14 @@
           "berth": "30E",
           "captain": "Daniel Zaragoza",
           "phone": "339-271-7239",
-          "email": "",
+          "email": "captain_63@hotmail.com",
           "dischCaptain": "Daniel Zaragoza",
           "dischPhone": "339-271-7239",
           "dischDate": "",
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "a47ba70e7",
@@ -87,7 +87,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "963ad245a",
@@ -129,7 +129,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "fbd25e250",
@@ -171,7 +171,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "761adea02",
@@ -216,9 +216,9 @@
           "contacted": false
         },
         {
-          "id": "f848ee1e8",
+          "id": "f00b34582",
           "make": "112' VAN DER VALK",
-          "name": "112' VAN DER VALK",
+          "name": "MARAVI",
           "loadPort": "PEV",
           "dischPort": "GEN",
           "date": "2026-05-26",
@@ -234,7 +234,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "e1afcb297",
@@ -318,7 +318,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "17bf3242f",
@@ -351,8 +351,8 @@
           "time": "13:00",
           "group": "1",
           "berth": "30E",
-          "captain": "CORY CROWNER",
-          "phone": "727.249.7295",
+          "captain": "SALVADOR OCHOA",
+          "phone": "+52 55 1952 8591",
           "email": "",
           "dischCaptain": "CORY CROWNER",
           "dischPhone": "727.249.7295",
@@ -360,7 +360,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "4ef5a74da",
@@ -381,7 +381,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "5314c382c",
