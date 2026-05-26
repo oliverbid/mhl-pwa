@@ -15,7 +15,7 @@
           "time": "08:00",
           "group": "1",
           "berth": "30E",
-          "captain": "FRANCO",
+          "captain": "(Franco) Racso Bustamante",
           "phone": "9546733462",
           "email": "",
           "dischCaptain": "Reinart Mostert",
@@ -23,8 +23,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "loaded",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "a146629eb",
@@ -44,7 +46,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -65,7 +67,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -74,8 +76,8 @@
           "name": "AIDA",
           "loadPort": "PEV",
           "dischPort": "GEN",
-          "date": "2026-05-25",
-          "time": "08:00",
+          "date": "2026-05-24",
+          "time": "16:00",
           "group": "1",
           "berth": "30E",
           "captain": "Jose Manuel",
@@ -86,8 +88,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "loaded",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "ad42c5810",
@@ -107,7 +111,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -128,8 +132,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "loaded",
+          "contacted": true
         },
         {
           "id": "955d92a42",
@@ -137,8 +141,8 @@
           "name": "DANZA NAUTICA",
           "loadPort": "PEV",
           "dischPort": "GEN",
-          "date": "2026-05-25",
-          "time": "17:00",
+          "date": "2026-05-26",
+          "time": "08:00",
           "group": "1",
           "berth": "30E",
           "captain": "Luke Rivara",
@@ -149,8 +153,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "c06db0061",
@@ -159,7 +165,7 @@
           "loadPort": "PEV",
           "dischPort": "GEN",
           "date": "2026-05-26",
-          "time": "08:00",
+          "time": "11:00",
           "group": "1",
           "berth": "30E",
           "captain": "-",
@@ -170,7 +176,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "new-schedule",
           "contacted": true
         },
         {
@@ -180,7 +186,7 @@
           "loadPort": "PEV",
           "dischPort": "GEN",
           "date": "2026-05-26",
-          "time": "13:00",
+          "time": "16:00",
           "group": "1",
           "berth": "30E",
           "captain": "SALVADOR OCHOA",
@@ -191,7 +197,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "new-schedule",
           "contacted": true
         },
         {
@@ -200,8 +206,8 @@
           "name": "APRIL FOOLS",
           "loadPort": "PEV",
           "dischPort": "GEN",
-          "date": "2026-05-26",
-          "time": "17:00",
+          "date": "2026-05-27",
+          "time": "08:00",
           "group": "1",
           "berth": "30E",
           "captain": "Capt. Steve Pavlish",
@@ -212,8 +218,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "e1afcb297",
@@ -255,7 +263,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "d9b1a1708",
@@ -318,7 +326,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "46b532f45",
@@ -381,7 +389,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "0be74de50",
@@ -402,7 +410,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "ddbb3e417",
