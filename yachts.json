@@ -23,7 +23,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -44,7 +44,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -65,7 +65,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -86,7 +86,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -107,7 +107,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -128,7 +128,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": false
         },
         {
@@ -149,7 +149,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -170,7 +170,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -180,7 +180,7 @@
           "loadPort": "PEV",
           "dischPort": "GEN",
           "date": "2026-05-26",
-          "time": "17:00",
+          "time": "13:00",
           "group": "1",
           "berth": "30E",
           "captain": "SALVADOR OCHOA",
@@ -191,7 +191,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -212,7 +212,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -285,7 +285,7 @@
           "loadPort": "PEV",
           "dischPort": "GEN",
           "date": "2026-05-28",
-          "time": "13:30",
+          "time": "19:00",
           "group": "1",
           "berth": "30E",
           "captain": "YANIV ELIYAHU",
@@ -296,7 +296,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "updated",
+          "status": "Scheduled",
           "contacted": true
         },
         {
@@ -351,8 +351,8 @@
           "time": "10:00",
           "group": "1",
           "berth": "30E",
-          "captain": "SALVADOR OCHOA",
-          "phone": "+52 55 1952 8591",
+          "captain": "CORY CROWNER",
+          "phone": "727.249.7295",
           "email": "",
           "dischCaptain": "CORY CROWNER",
           "dischPhone": "727.249.7295",
@@ -405,13 +405,34 @@
           "contacted": false
         },
         {
+          "id": "8e2038a85",
+          "make": "38' FJORD",
+          "name": "38' FJORD",
+          "loadPort": "PEV",
+          "dischPort": "GEN",
+          "date": "2026-05-29",
+          "time": "15:00",
+          "group": "1",
+          "berth": "30E",
+          "captain": "SALVADOR OCHOA",
+          "phone": "+52 55 1952 8591",
+          "email": "",
+          "dischCaptain": "CORY CROWNER",
+          "dischPhone": "727.249.7295",
+          "dischDate": "",
+          "dischTime": "",
+          "agent": "",
+          "status": "Scheduled",
+          "contacted": true
+        },
+        {
           "id": "00e624776",
           "make": "32' CONTENDER on trailer",
           "name": "CONTENDER 32",
           "loadPort": "PEV",
           "dischPort": "STT",
           "date": "2026-05-29",
-          "time": "15:00",
+          "time": "16:00",
           "group": "1",
           "berth": "30E",
           "captain": "George Melance",
