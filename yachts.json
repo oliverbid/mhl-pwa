@@ -159,7 +159,7 @@
           "loadPort": "PEV",
           "dischPort": "LAP",
           "date": "12th",
-          "time": "11:00",
+          "time": "10:00",
           "group": "2",
           "berth": "30E",
           "captain": "ERIC CASTILLO",
@@ -170,7 +170,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "new-schedule",
           "contacted": false
         },
         {
@@ -510,34 +510,13 @@
           "contacted": false
         },
         {
-          "id": "bb1903a03",
-          "make": "57 VANQUISH",
-          "name": "57 VANQUISH",
-          "loadPort": "PEV",
-          "dischPort": "LAP",
-          "date": "12th",
-          "time": "08:00",
-          "group": "2",
-          "berth": "30E",
-          "captain": "",
-          "phone": "",
-          "email": "",
-          "dischCaptain": "",
-          "dischPhone": "",
-          "dischDate": "",
-          "dischTime": "",
-          "agent": "",
-          "status": "Scheduled",
-          "contacted": false
-        },
-        {
           "id": "09c60793d",
           "make": "80' VIKING",
           "name": "SENTOSA",
           "loadPort": "PEV",
           "dischPort": "ENS",
           "date": "12th",
-          "time": "09:00",
+          "time": "08:00",
           "group": "2",
           "berth": "30E",
           "captain": "Alex Hummel",
@@ -548,7 +527,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "new-schedule",
           "contacted": false
         },
         {
@@ -639,8 +618,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "a146629eb",
@@ -745,7 +726,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "955d92a42",
@@ -849,7 +830,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -870,7 +851,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -891,7 +872,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -912,7 +893,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -933,7 +914,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -954,7 +935,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -975,7 +956,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -996,7 +977,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -1017,7 +998,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": false
         },
         {
@@ -1038,7 +1019,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -1059,7 +1040,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
