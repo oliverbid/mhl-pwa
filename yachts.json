@@ -24,7 +24,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "1a4a4c867",
@@ -74,9 +74,9 @@
           "name": "DIVINIDAD",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "10th",
-          "time": "14:30",
-          "group": "1",
+          "date": "2026-06-10",
+          "time": "11:00",
+          "group": "2",
           "berth": "30E",
           "captain": "Matthew",
           "phone": "619-847-9208",
@@ -86,8 +86,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "74c5e8b95",
@@ -96,7 +98,7 @@
           "loadPort": "PEV",
           "dischPort": "LAP",
           "date": "10th",
-          "time": "15:30",
+          "time": "14:00",
           "group": "1",
           "berth": "30E",
           "captain": "Luis Javier Barroso",
@@ -107,7 +109,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "updated",
           "contacted": false
         },
         {
@@ -117,7 +119,7 @@
           "loadPort": "PEV",
           "dischPort": "ENS",
           "date": "10th",
-          "time": "17:00",
+          "time": "15:30",
           "group": "1",
           "berth": "30E",
           "captain": "Anji Reddy",
@@ -128,7 +130,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "updated",
           "contacted": true
         },
         {
@@ -137,7 +139,7 @@
           "name": "MAJA I",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "10th",
+          "date": "2026-06-11",
           "time": "10:00",
           "group": "2",
           "berth": "30E",
@@ -149,8 +151,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "",
+          "contacted": false,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "46f5ea656",
@@ -159,7 +163,7 @@
           "loadPort": "PEV",
           "dischPort": "LAP",
           "date": "10th",
-          "time": "11:00",
+          "time": "10:00",
           "group": "2",
           "berth": "30E",
           "captain": "Diego Castañeda Toribio",
@@ -170,8 +174,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "updated",
+          "contacted": true
         },
         {
           "id": "b22b87b5e",
@@ -195,27 +199,6 @@
           "contacted": true
         },
         {
-          "id": "a444703ad",
-          "make": "53' HCB",
-          "name": "53' HCB",
-          "loadPort": "PEV",
-          "dischPort": "LAP",
-          "date": "10th",
-          "time": "14:30",
-          "group": "2",
-          "berth": "30E",
-          "captain": "",
-          "phone": "",
-          "email": "",
-          "dischCaptain": "",
-          "dischPhone": "",
-          "dischDate": "",
-          "dischTime": "",
-          "agent": "",
-          "status": "Scheduled",
-          "contacted": false
-        },
-        {
           "id": "3d76d1a24",
           "make": "37' VALHALLA",
           "name": "MI NOVIA",
@@ -234,7 +217,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "2db056743",
@@ -297,7 +280,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "d313975ea",
