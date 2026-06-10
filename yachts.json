@@ -11,7 +11,7 @@
           "name": "ATHENA",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-10",
+          "date": "10th",
           "time": "10:00",
           "group": "1",
           "berth": "30E",
@@ -23,10 +23,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "1a4a4c867",
@@ -34,7 +32,7 @@
           "name": "JOURNEY GIRLS",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-10",
+          "date": "10th",
           "time": "11:00",
           "group": "1",
           "berth": "30E",
@@ -46,10 +44,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "f1e4f972e",
@@ -57,7 +53,7 @@
           "name": "TIGHT SQUEEZE",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-11",
+          "date": "10th",
           "time": "13:00",
           "group": "1",
           "berth": "30E",
@@ -69,33 +65,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
-        },
-        {
-          "id": "5eb6d2178",
-          "make": "42' BOSTON WHALER",
-          "name": "DIVINIDAD",
-          "loadPort": "PEV",
-          "dischPort": "LAP",
-          "date": "2026-06-10",
-          "time": "11:00",
-          "group": "2",
-          "berth": "30E",
-          "captain": "Matthew",
-          "phone": "619-847-9208",
-          "email": "",
-          "dischCaptain": "Matthew",
-          "dischPhone": "619-847-9208",
-          "dischDate": "",
-          "dischTime": "",
-          "agent": "",
-          "status": "new-schedule",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "74c5e8b95",
@@ -103,7 +74,7 @@
           "name": "FUNSEEKER",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-10",
+          "date": "10th",
           "time": "14:00",
           "group": "1",
           "berth": "30E",
@@ -115,10 +86,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
-          "contacted": false,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "56c8a9407",
@@ -126,7 +95,7 @@
           "name": "FIRST BOAT",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-10",
+          "date": "10th",
           "time": "15:30",
           "group": "1",
           "berth": "30E",
@@ -138,33 +107,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
-        },
-        {
-          "id": "8c2bc5f0f",
-          "make": "48' SEA VEE ON TRAILER",
-          "name": "MAJA I",
-          "loadPort": "PEV",
-          "dischPort": "LAP",
-          "date": "2026-06-11",
-          "time": "10:00",
-          "group": "2",
-          "berth": "30E",
-          "captain": "ERIC CASTILLO",
-          "phone": "+ 1 305 773 3624",
-          "email": "",
-          "dischCaptain": "JOSE QUINTERO",
-          "dischPhone": "+ 1 305 773 3624",
-          "dischDate": "",
-          "dischTime": "",
-          "agent": "",
-          "status": "",
-          "contacted": false,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "46f5ea656",
@@ -172,7 +116,7 @@
           "name": "CLUB LL ON THE ROCKS",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-10",
+          "date": "10th",
           "time": "10:00",
           "group": "2",
           "berth": "30E",
@@ -184,10 +128,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "new-schedule",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "b22b87b5e",
@@ -195,8 +137,8 @@
           "name": "44' REGAL",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-10",
-          "time": "13:00",
+          "date": "10th",
+          "time": "11:00",
           "group": "2",
           "berth": "30E",
           "captain": "",
@@ -207,10 +149,29 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
+        },
+        {
+          "id": "5eb6d2178",
+          "make": "42' BOSTON WHALER",
+          "name": "DIVINIDAD",
+          "loadPort": "PEV",
+          "dischPort": "LAP",
+          "date": "10th",
+          "time": "13:30",
+          "group": "2",
+          "berth": "30E",
+          "captain": "Matthew",
+          "phone": "619-847-9208",
+          "email": "",
+          "dischCaptain": "Matthew",
+          "dischPhone": "619-847-9208",
+          "dischDate": "",
+          "dischTime": "",
+          "agent": "",
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "3d76d1a24",
@@ -218,7 +179,7 @@
           "name": "MI NOVIA",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-10",
+          "date": "10th",
           "time": "16:00",
           "group": "2",
           "berth": "30E",
@@ -230,10 +191,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "2db056743",
@@ -241,7 +200,7 @@
           "name": "SWOOSHH5",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "08:00",
           "group": "2",
           "berth": "30E",
@@ -253,10 +212,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "f9feb17ee",
@@ -264,7 +221,7 @@
           "name": "EL JEFE",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "09:00",
           "group": "2",
           "berth": "30E",
@@ -276,10 +233,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": false,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "9a7dd9abc",
@@ -287,7 +242,7 @@
           "name": "LIT UP",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "10:30",
           "group": "2",
           "berth": "30E",
@@ -299,10 +254,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "d313975ea",
@@ -310,7 +263,7 @@
           "name": "BIG OH",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "13:00",
           "group": "2",
           "berth": "30E",
@@ -322,10 +275,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": false,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "5c9999e4c",
@@ -333,7 +284,7 @@
           "name": "TIGHT LINE",
           "loadPort": "PEV",
           "dischPort": "GOL",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "14:30",
           "group": "2",
           "berth": "30E",
@@ -345,10 +296,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "693869be3",
@@ -356,7 +305,7 @@
           "name": "BOW DOWN",
           "loadPort": "PEV",
           "dischPort": "GOL",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "17:00",
           "group": "2",
           "berth": "30E",
@@ -368,10 +317,29 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": false,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
+        },
+        {
+          "id": "8c2bc5f0f",
+          "make": "48' SEA VEE ON TRAILER",
+          "name": "MAJA I",
+          "loadPort": "PEV",
+          "dischPort": "LAP",
+          "date": "10th",
+          "time": "08:00",
+          "group": "1",
+          "berth": "30E",
+          "captain": "ERIC CASTILLO",
+          "phone": "+ 1 305 773 3624",
+          "email": "",
+          "dischCaptain": "JOSE QUINTERO",
+          "dischPhone": "+ 1 305 773 3624",
+          "dischDate": "",
+          "dischTime": "",
+          "agent": "",
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "aad914f87",
@@ -379,7 +347,7 @@
           "name": "OSSUM DREAM",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "08:00",
           "group": "1",
           "berth": "30E",
@@ -391,10 +359,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": false,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "2f92a077c",
@@ -402,7 +368,7 @@
           "name": "DANCING TIDES",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "14:00",
           "group": "1",
           "berth": "30E",
@@ -414,10 +380,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "13dbc3230",
@@ -425,7 +389,7 @@
           "name": "LAZ CALL",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-11",
+          "date": "11th",
           "time": "17:00",
           "group": "1",
           "berth": "30E",
@@ -437,10 +401,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "3bac7e989",
@@ -448,7 +410,7 @@
           "name": "95' SUNSEEKER",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-12",
+          "date": "12th",
           "time": "08:00",
           "group": "1",
           "berth": "30E",
@@ -460,10 +422,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "7445dd444",
@@ -471,7 +431,7 @@
           "name": "20' TENDER",
           "loadPort": "PEV",
           "dischPort": "LAP",
-          "date": "2026-06-12",
+          "date": "12th",
           "time": "10:00",
           "group": "1",
           "berth": "30E",
@@ -483,10 +443,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "09c60793d",
@@ -494,7 +452,7 @@
           "name": "SENTOSA",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-12",
+          "date": "12th",
           "time": "08:00",
           "group": "2",
           "berth": "30E",
@@ -506,10 +464,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "67f11bef9",
@@ -517,7 +473,7 @@
           "name": "TROIS VIGNES",
           "loadPort": "PEV",
           "dischPort": "ENS",
-          "date": "2026-06-12",
+          "date": "12th",
           "time": "11:00",
           "group": "1",
           "berth": "30E",
@@ -529,10 +485,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": false,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "e594f0568",
@@ -605,12 +559,12 @@
       "archived": false,
       "yachts": [
         {
-          "id": "0518f0615",
+          "id": "136fe9291",
           "make": "28' AXOPAR",
           "name": "TT YCM 120",
           "loadPort": "PEV",
           "dischPort": "GEN",
-          "date": "",
+          "date": "2026-01-12",
           "time": "",
           "group": "1",
           "berth": "",
