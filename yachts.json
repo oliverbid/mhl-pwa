@@ -6,12 +6,12 @@
       "archived": false,
       "yachts": [
         {
-          "id": "06f222317",
+          "id": "62af9a46b",
           "make": "86' RIVA",
           "name": "RIVATHEIA (EX DA ROSE)",
           "loadPort": "PEV",
           "dischPort": "MAR",
-          "date": "2026-06-06",
+          "date": "2026-07-06",
           "time": "10:00",
           "group": "TBC",
           "berth": "",
@@ -27,12 +27,12 @@
           "contacted": false
         },
         {
-          "id": "7284bdb43",
+          "id": "6be7dfaa2",
           "make": "25m AZIMUT GRANDE",
           "name": "LIMITLESS",
           "loadPort": "PEV",
           "dischPort": "MAR",
-          "date": "2026-06-06",
+          "date": "2026-07-06",
           "time": "13:00",
           "group": "TBC",
           "berth": "",
@@ -48,12 +48,12 @@
           "contacted": false
         },
         {
-          "id": "6d4027834",
+          "id": "136ebc051",
           "make": "95' PRINCESS",
           "name": "CURRENT SEA",
           "loadPort": "PEV",
           "dischPort": "MAR",
-          "date": "2026-06-06",
+          "date": "2026-07-06",
           "time": "15:30",
           "group": "TBC",
           "berth": "",
