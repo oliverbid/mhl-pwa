@@ -24,11 +24,11 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "6be7dfaa2",
-          "make": "27m AZIMUT GRANDE",
+          "make": "25m AZIMUT GRANDE",
           "name": "LIMITLESS",
           "loadPort": "PEV",
           "dischPort": "MAR",
@@ -44,10 +44,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": true
         },
         {
           "id": "136ebc051",
