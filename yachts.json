@@ -28,7 +28,7 @@
         },
         {
           "id": "6be7dfaa2",
-          "make": "25m AZIMUT GRANDE",
+          "make": "27m AZIMUT GRANDE",
           "name": "LIMITLESS",
           "loadPort": "PEV",
           "dischPort": "MAR",
@@ -44,8 +44,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "136ebc051",
@@ -129,7 +131,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "571405d28",
@@ -192,7 +194,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "d1d0f970a",
