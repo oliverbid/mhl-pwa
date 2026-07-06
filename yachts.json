@@ -15,16 +15,18 @@
           "time": "10:00",
           "group": "TBC",
           "berth": "",
-          "captain": "Christos Kaliptsidis",
+          "captain": "Jeff Partin",
           "phone": "+306944271631",
-          "email": "",
+          "email": "jpmarine12@gmail.com",
           "dischCaptain": "Christos Kaliptsidis",
           "dischPhone": "+306944271631",
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "loaded",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "6be7dfaa2",
@@ -66,7 +68,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "68494d28d",
@@ -108,7 +110,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "3c704bc5a",
@@ -150,7 +152,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "58ef4b299",
