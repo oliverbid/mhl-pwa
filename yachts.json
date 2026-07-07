@@ -46,7 +46,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -67,7 +67,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -88,8 +88,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "loaded",
+          "contacted": true
         },
         {
           "id": "e8f915d61",
@@ -109,13 +109,13 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
           "id": "3c704bc5a",
-          "make": "42m OCEANO",
-          "name": "MISS AMERICA",
+          "make": "144 Vanvil",
+          "name": "",
           "loadPort": "PEV",
           "dischPort": "MAR",
           "date": "2026-07-07",
@@ -130,8 +130,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": true
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "571405d28",
@@ -153,27 +155,6 @@
           "agent": "",
           "status": "Scheduled",
           "contacted": true
-        },
-        {
-          "id": "58ef4b299",
-          "make": "27' HIGHFIELD",
-          "name": "TT MISS AMERICA",
-          "loadPort": "PEV",
-          "dischPort": "MAR",
-          "date": "2026-07-08",
-          "time": "08:00",
-          "group": "TBC",
-          "berth": "",
-          "captain": "Phil Martin",
-          "phone": "954 440-9819",
-          "email": "",
-          "dischCaptain": "Franco",
-          "dischPhone": "954 440-9819",
-          "dischDate": "",
-          "dischTime": "",
-          "agent": "",
-          "status": "Scheduled",
-          "contacted": false
         },
         {
           "id": "ab8d2602f",
