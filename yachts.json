@@ -130,7 +130,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
+          "status": "loaded",
           "contacted": true,
           "agentPhone": "",
           "notes": ""
@@ -153,7 +153,7 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
+          "status": "loaded",
           "contacted": true
         },
         {
@@ -183,8 +183,8 @@
           "name": "40' PRINCESS",
           "loadPort": "PEV",
           "dischPort": "MAR",
-          "date": "2026-07-08",
-          "time": "10:00",
+          "date": "2026-07-07",
+          "time": "18:00",
           "group": "TBC",
           "berth": "",
           "captain": "",
@@ -195,8 +195,10 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "3e9fd646f",
@@ -217,28 +219,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
-        },
-        {
-          "id": "cc89f8f05",
-          "make": "64' AZIMUT",
-          "name": "64' AZIMUT",
-          "loadPort": "PEV",
-          "dischPort": "MAR",
-          "date": "2026-07-08",
-          "time": "15:00",
-          "group": "TBC",
-          "berth": "",
-          "captain": "",
-          "phone": "",
-          "email": "",
-          "dischCaptain": "",
-          "dischPhone": "",
-          "dischDate": "",
-          "dischTime": "",
-          "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         }
       ]
     }
