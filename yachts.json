@@ -15,18 +15,16 @@
           "time": "10:00",
           "group": "TBC",
           "berth": "",
-          "captain": "Jeff Partin",
+          "captain": "Christos Kaliptsidis",
           "phone": "+306944271631",
-          "email": "jpmarine12@gmail.com",
+          "email": "",
           "dischCaptain": "Christos Kaliptsidis",
           "dischPhone": "+306944271631",
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "6be7dfaa2",
@@ -46,8 +44,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
-          "contacted": true
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "136ebc051",
@@ -67,8 +65,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
-          "contacted": true
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "68494d28d",
@@ -88,8 +86,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
-          "contacted": true
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "e8f915d61",
@@ -109,13 +107,13 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
-          "contacted": true
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "3c704bc5a",
-          "make": "144 Vanvil",
-          "name": "",
+          "make": "42m OCEANO",
+          "name": "MISS AMERICA",
           "loadPort": "PEV",
           "dischPort": "MAR",
           "date": "2026-07-07",
@@ -130,10 +128,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "571405d28",
@@ -153,8 +149,29 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "loaded",
-          "contacted": true
+          "status": "Scheduled",
+          "contacted": false
+        },
+        {
+          "id": "58ef4b299",
+          "make": "27' HIGHFIELD",
+          "name": "TT MISS AMERICA",
+          "loadPort": "PEV",
+          "dischPort": "MAR",
+          "date": "2026-07-08",
+          "time": "08:00",
+          "group": "TBC",
+          "berth": "",
+          "captain": "Phil Martin",
+          "phone": "954 440-9819",
+          "email": "",
+          "dischCaptain": "Franco",
+          "dischPhone": "954 440-9819",
+          "dischDate": "",
+          "dischTime": "",
+          "agent": "",
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "ab8d2602f",
@@ -175,7 +192,7 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": true
+          "contacted": false
         },
         {
           "id": "d1d0f970a",
@@ -183,8 +200,8 @@
           "name": "40' PRINCESS",
           "loadPort": "PEV",
           "dischPort": "MAR",
-          "date": "2026-07-07",
-          "time": "18:00",
+          "date": "2026-07-08",
+          "time": "10:00",
           "group": "TBC",
           "berth": "",
           "captain": "",
@@ -195,10 +212,8 @@
           "dischDate": "",
           "dischTime": "",
           "agent": "",
-          "status": "",
-          "contacted": true,
-          "agentPhone": "",
-          "notes": ""
+          "status": "Scheduled",
+          "contacted": false
         },
         {
           "id": "3e9fd646f",
@@ -219,7 +234,28 @@
           "dischTime": "",
           "agent": "",
           "status": "Scheduled",
-          "contacted": true
+          "contacted": false
+        },
+        {
+          "id": "cc89f8f05",
+          "make": "64' AZIMUT",
+          "name": "64' AZIMUT",
+          "loadPort": "PEV",
+          "dischPort": "MAR",
+          "date": "2026-07-08",
+          "time": "15:00",
+          "group": "TBC",
+          "berth": "",
+          "captain": "",
+          "phone": "",
+          "email": "",
+          "dischCaptain": "",
+          "dischPhone": "",
+          "dischDate": "",
+          "dischTime": "",
+          "agent": "",
+          "status": "Scheduled",
+          "contacted": false
         }
       ]
     }
