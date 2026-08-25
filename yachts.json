@@ -45,7 +45,7 @@
           "dischTime": "16:30",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "3370a49b6",
@@ -53,8 +53,8 @@
           "name": "T1",
           "loadPort": "NAN",
           "dischPort": "PEV",
-          "date": "",
-          "time": "",
+          "date": "2026-08-29",
+          "time": "09:13",
           "group": "TBC",
           "berth": "",
           "captain": "Jason Caple / Brendan Burgess",
@@ -62,11 +62,13 @@
           "email": "",
           "dischCaptain": "Bradley Thomas",
           "dischPhone": "250-353-3299 / 778-2454-2424",
-          "dischDate": "2026-08-28",
-          "dischTime": "18:30",
+          "dischDate": "2026-08-29",
+          "dischTime": "09:30",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "ff70b9e1b",
@@ -84,7 +86,7 @@
           "dischCaptain": "Dennis Smith",
           "dischPhone": "1(386)453-4022",
           "dischDate": "2026-08-29",
-          "dischTime": "08:30",
+          "dischTime": "10:00",
           "agent": "",
           "status": "Scheduled",
           "contacted": false
@@ -105,7 +107,7 @@
           "dischCaptain": "Blake Nichol",
           "dischPhone": "352-586-9297",
           "dischDate": "2026-08-29",
-          "dischTime": "09:30",
+          "dischTime": "10:30",
           "agent": "",
           "status": "Scheduled",
           "contacted": false
@@ -126,10 +128,10 @@
           "dischCaptain": "Clinton",
           "dischPhone": "954-609-6354",
           "dischDate": "2026-08-29",
-          "dischTime": "10:00",
+          "dischTime": "11:00",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "a660df4e5",
@@ -147,7 +149,7 @@
           "dischCaptain": "Jack Fedorovich/Sylvain Tremblay",
           "dischPhone": "236-638-6604/250-5071782",
           "dischDate": "2026-08-29",
-          "dischTime": "11:00",
+          "dischTime": "12:00",
           "agent": "",
           "status": "Scheduled",
           "contacted": false
@@ -168,10 +170,10 @@
           "dischCaptain": "Steven Argosy",
           "dischPhone": "772-480-4252",
           "dischDate": "2026-08-29",
-          "dischTime": "11:30",
+          "dischTime": "13:30",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "b9c690934",
@@ -189,7 +191,7 @@
           "dischCaptain": "Jason Jeffcoat",
           "dischPhone": "360-255-1420",
           "dischDate": "2026-08-29",
-          "dischTime": "14:00",
+          "dischTime": "15:30",
           "agent": "",
           "status": "Scheduled",
           "contacted": false
