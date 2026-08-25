@@ -1310,27 +1310,41 @@
     }).join('');
   }
 
-  // Discharge view: team grouping only, no dates, no times (discharge schedule TBD)
+  // Discharge view: group by dischDate, then by team within each date
   function buildTeamGroupsHTML(yachts, isArchived) {
-    const sorted = [...yachts].sort((a, b) =>
-      (a.group || '').localeCompare(b.group || '') ||
-      (a.make || a.name || '').localeCompare(b.make || b.name || '')
-    );
-    const teamMap = sorted.reduce((acc, y) => {
-      const key = y.group || '';
+    const sorted = [...yachts].sort((a, b) => {
+      const da = (a.dischDate || '') + 'T' + (a.dischTime || '00:00');
+      const db = (b.dischDate || '') + 'T' + (b.dischTime || '00:00');
+      if (da !== db) return da.localeCompare(db);
+      return (a.group || '').localeCompare(b.group || '');
+    });
+    const dateGroups = sorted.reduce((acc, y) => {
+      const key = y.dischDate || 'No date';
       if (!acc[key]) acc[key] = [];
       acc[key].push(y);
       return acc;
     }, {});
-    const teamKeys = Object.keys(teamMap).sort();
-    const multipleTeams = teamKeys.length > 1;
-    return teamKeys.map(teamKey => {
-      const teamHeader = multipleTeams
-        ? `<div class="team-header">Team ${teamKey || 'TBC'}</div>`
-        : '';
-      return `<div class="team-group">
-        ${teamHeader}
-        ${teamMap[teamKey].map(y => yachtCard(y, 'DISCH', isArchived)).join('')}
+    return Object.entries(dateGroups).map(([dateKey, dayYachts]) => {
+      const teamMap = dayYachts.reduce((acc, y) => {
+        const key = y.group || '';
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(y);
+        return acc;
+      }, {});
+      const teamKeys = Object.keys(teamMap).sort();
+      const multipleTeams = teamKeys.length > 1;
+      const teamsHtml = teamKeys.map(teamKey => {
+        const teamHeader = multipleTeams
+          ? `<div class="team-header">Team ${teamKey || 'TBC'}</div>`
+          : '';
+        return `<div class="team-group">
+          ${teamHeader}
+          ${teamMap[teamKey].map(y => yachtCard(y, 'DISCH', isArchived)).join('')}
+        </div>`;
+      }).join('');
+      return `<div class="day-group">
+        <div class="day-header">${dateKey !== 'No date' ? formatDate(dateKey) : 'No discharge date set'}</div>
+        ${teamsHtml}
       </div>`;
     }).join('');
   }
