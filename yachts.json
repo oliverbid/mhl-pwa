@@ -76,8 +76,8 @@
           "name": "IT'S ABOUT TIME",
           "loadPort": "NAN",
           "dischPort": "PEV",
-          "date": "",
-          "time": "",
+          "date": "2026-08-28",
+          "time": "15:46",
           "group": "TBC",
           "berth": "",
           "captain": "Dennis Smith",
@@ -85,11 +85,13 @@
           "email": "",
           "dischCaptain": "Dennis Smith",
           "dischPhone": "1(386)453-4022",
-          "dischDate": "2026-08-29",
-          "dischTime": "10:00",
+          "dischDate": "2026-08-28",
+          "dischTime": "17:30",
           "agent": "",
-          "status": "Scheduled",
-          "contacted": false
+          "status": "",
+          "contacted": true,
+          "agentPhone": "",
+          "notes": ""
         },
         {
           "id": "edb87651f",
@@ -152,7 +154,7 @@
           "dischTime": "12:00",
           "agent": "",
           "status": "Scheduled",
-          "contacted": false
+          "contacted": true
         },
         {
           "id": "2a8b24f61",
